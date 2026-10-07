@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SYSTEM // SHADOW ARCHITECT ENGINE</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts: Rajdhani & Orbitron & Fira Code for System Sci-Fi Aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#09090B',
+            hud: {
+              card: '#0E1017',
+              border: '#1E2338',
+              cyan: '#00E5FF',
+              indigo: '#1E1B4B',
+              blue: '#0088FF',
+              warning: '#FF0055',
+              amber: '#FFB300',
+              accent: '#7C3AED'
+            }
+          },
+          fontFamily: {
+            mono: ['"Fira Code"', 'monospace'],
+            orbitron: ['Orbitron', 'sans-serif'],
+            rajdhani: ['Rajdhani', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 15px rgba(0, 229, 255, 0.4)',
+            'glow-cyan-lg': '0 0 30px rgba(0, 229, 255, 0.6)',
+            'glow-red': '0 0 20px rgba(255, 0, 85, 0.5)',
+            'glow-card': '0 4px 20px -2px rgba(0, 229, 255, 0.1)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #09090B;
+      color: #E2E8F0;
+      font-family: 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Sci-Fi Scanline Overlay */
+    .scanlines {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      ), linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.03),
+        rgba(0, 255, 0, 0.01),
+        rgba(0, 0, 255, 0.03)
+      );
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+    }
+
+    /* Warning Scanlines for High Stagnation */
+    .warning-scanlines {
+      animation: pulseWarning 1.5s infinite alternate;
+    }
+
+    @keyframes pulseWarning {
+      0% { box-shadow: inset 0 0 15px rgba(255, 0, 85, 0.2); }
+      100% { box-shadow: inset 0 0 50px rgba(255, 0, 85, 0.5); }
+    }
+
+    /* Glowing HUD Borders & Vector Corners */
+    .hud-box {
+      position: relative;
+      background: rgba(14, 16, 23, 0.85);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      backdrop-filter: blur(12px);
+    }
+
+    .hud-box::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 10px; height: 10px;
+      border-top: 2px solid #00E5FF;
+      border-left: 2px solid #00E5FF;
+    }
+
+    .hud-box::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; right: -1px;
+      width: 10px; height: 10px;
+      border-bottom: 2px solid #00E5FF;
+      border-right: 2px solid #00E5FF;
+    }
+
+    .hud-box-warning {
+      border-color: rgba(255, 0, 85, 0.4) !important;
+    }
+    .hud-box-warning::before, .hud-box-warning::after {
+      border-color: #FF0055 !important;
+    }
+
+    /* Floating XP Text Popup */
+    .xp-popup {
+      position: fixed;
+      pointer-events: none;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      color: #00E5FF;
+      text-shadow: 0 0 10px #00E5FF;
+      animation: floatUp 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      z-index: 9999;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(0) scale(0.7); }
+      20% { opacity: 1; transform: translateY(-15px) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1); }
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090B;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E2338;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00E5FF;
+    }
+
+    /* Glowing Text Effect */
+    .glow-text {
+      text-shadow: 0 0 10px rgba(0, 229, 255, 0.7);
+    }
+    .glow-text-red {
+      text-shadow: 0 0 10px rgba(255, 0, 85, 0.8);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between relative bg-obsidian text-slate-200">
+
+  <!-- Dynamic Scanline Overlay Toggle Layer -->
+  <div id="scanlineOverlay" class="scanlines fixed inset-0 z-50"></div>
+
+  <!-- Notification Popup Toast Layer -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- System Header Bar -->
+  <header class="hud-box border-b border-hud-border bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+      
+      <!-- System Title & Player Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded bg-hud-indigo border border-hud-cyan flex items-center justify-center text-hud-cyan shadow-glow-cyan">
+          <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-orbitron text-xs tracking-widest text-hud-cyan uppercase">SYSTEM // SHADOW ARCHITECT</span>
+            <span id="systemStatusBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">ONLINE</span>
+          </div>
+          <h1 id="playerTitleDisplay" class="font-orbitron font-extrabold text-lg sm:text-xl text-white tracking-wider glow-text">
+            THE SHADOW ARCHITECT <span class="text-xs text-hud-cyan font-normal ml-1">[LVL <span id="hdrLevel">1</span>]</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Quick Metrics HUD Header -->
+      <div class="flex items-center space-x-4 sm:space-x-6 text-sm font-mono">
+        <!-- Stagnation Meter Bar -->
+        <div class="flex flex-col items-end min-w-[120px]">
+          <div class="flex items-center space-x-1">
+            <span class="text-[10px] text-slate-400 uppercase">PASSIVE DRIFT</span>
+            <span id="driftRatePercent" class="text-xs font-bold text-hud-cyan">12.0%</span>
+          </div>
+          <div class="w-28 sm:w-36 h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800 mt-0.5">
+            <div id="driftBarHeader" class="h-full bg-gradient-to-r from-hud-cyan via-amber-400 to-hud-warning transition-all duration-300" style="width: 12%"></div>
+          </div>
+        </div>
+
+        <!-- Controls: Scanlines / Audio / Export -->
+        <div class="flex items-center space-x-2">
+          <button id="btnToggleAudio" onclick="toggleAudio()" class="p-2 rounded hud-box text-slate-300 hover:text-hud-cyan hover:border-hud-cyan transition" title="Toggle Audio Synth">
+            <svg id="iconAudio" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+          </button>
+          <button id="btnToggleFX" onclick="toggleScanlines()" class="p-2 rounded hud-box text-slate-300 hover:text-hud-cyan hover:border-hud-cyan transition" title="Toggle Scanline FX">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </button>
+          <button onclick="exportSystemData()" class="p-2 rounded hud-box text-slate-300 hover:text-hud-cyan hover:border-hud-cyan transition" title="Backup / Export JSON">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Navigation Header Tabs -->
+  <main class="max-w-7xl w-full mx-auto px-4 py-6 flex-1 flex flex-col gap-6">
+    <nav class="flex overflow-x-auto gap-2 pb-2 border-b border-hud-border scrollbar-none">
+      <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-hud-cyan text-hud-cyan bg-hud-indigo/40 shadow-glow-cyan">
+        🛡️ SYSTEM HUD & STATS
+      </button>
+      <button onclick="switchTab('quests')" id="tab-quests" class="tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+        ⚔️ DAILY QUESTS & FAILS
+      </button>
+      <button onclick="switchTab('telemetry')" id="tab-telemetry" class="tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+        ⚡ ATHLETIC TELEMETRY
+      </button>
+      <button onclick="switchTab('projects')" id="tab-projects" class="tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+        🛠️ EMBEDDED & BUILD LOGS
+      </button>
+      <button onclick="switchTab('logs')" id="tab-logs" class="tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700">
+        📊 SYSTEM LEDGER
+      </button>
+    </nav>
+
+    <!-- TAB 1: SYSTEM OVERVIEW & CORE STAT ENGINE -->
+    <div id="view-overview" class="tab-view space-y-6">
+      
+      <!-- Top Grid: Player Card + Radar Chart + Stagnation Monitor -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Player Level & XP HUD Card (4 cols) -->
+        <div class="lg:col-span-4 hud-box p-5 rounded-lg flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <span class="text-xs font-mono text-hud-cyan tracking-widest uppercase">MONARCH STATUS</span>
+                <h2 id="cardTitle" class="font-orbitron font-extrabold text-2xl text-white mt-0.5">THE SHADOW ARCHITECT</h2>
+                <p id="cardSubTitle" class="text-xs text-slate-400 font-mono mt-1">EMBEDDED HARDWARE MONARCH // CLASS S</p>
+              </div>
+              <div class="px-3 py-1.5 rounded bg-hud-cyan/10 border border-hud-cyan text-hud-cyan font-orbitron text-xl font-black">
+                LVL <span id="displayLevel">1</span>
+              </div>
+            </div>
+
+            <!-- Non-Linear XP Bar -->
+            <div class="space-y-2 mt-6">
+              <div class="flex justify-between text-xs font-mono">
+                <span class="text-slate-400">XP PROGRESSION</span>
+                <span class="text-hud-cyan"><span id="currXP">0</span> / <span id="reqXP">100</span> XP</span>
+              </div>
+              <div class="h-3 bg-slate-900 rounded-full overflow-hidden border border-slate-800 p-0.5">
+                <div id="xpProgressBar" class="h-full bg-gradient-to-r from-hud-indigo via-hud-blue to-hud-cyan rounded-full transition-all duration-500 shadow-glow-cyan" style="width: 0%"></div>
+              </div>
+              <p class="text-[11px] text-slate-500 font-mono text-right italic">Formula: XP = 100 × Level<sup>1.5</sup></p>
+            </div>
+
+            <!-- Unallocated Stat Points Pool -->
+            <div class="mt-6 p-4 rounded bg-slate-900/80 border border-hud-border flex justify-between items-center">
+              <div>
+                <span class="text-xs font-mono text-slate-400 block">AVAILABLE STAT POINTS</span>
+                <span id="statPointsDisplay" class="font-orbitron text-2xl font-bold text-hud-cyan glow-text">0</span>
+              </div>
+              <button onclick="resetStatsConfirmation()" class="px-3 py-1.5 rounded text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                Reset Allocations
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick System Advice Box -->
+          <div class="mt-6 p-3 rounded bg-hud-indigo/20 border border-hud-indigo/40 text-xs text-slate-300 font-mono">
+            <span class="text-hud-cyan font-bold block mb-1">⚡ SYSTEM DIRECTIVE:</span>
+            Execute daily non-negotiables & firmware debugging to prevent Passive Stagnation drift accumulation.
+          </div>
+        </div>
+
+        <!-- Interactive Stat Radar Canvas (4 cols) -->
+        <div class="lg:col-span-4 hud-box p-5 rounded-lg flex flex-col items-center justify-center relative min-h-[300px]">
+          <div class="absolute top-3 left-3 text-xs font-mono text-hud-cyan tracking-widest uppercase">
+            STAT RADAR GEOMETRY
+          </div>
+          <canvas id="radarCanvas" width="320" height="320" class="max-w-full h-auto mt-4"></canvas>
+        </div>
+
+        <!-- Passive Stagnation / Drift Monitor (4 cols) -->
+        <div id="driftMonitorBox" class="lg:col-span-4 hud-box p-5 rounded-lg flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-xs font-mono text-hud-warning tracking-widest uppercase flex items-center gap-1">
+                <svg class="w-4 h-4 text-hud-warning animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                DYNAMIC PASSIVE DRIFT
+              </span>
+              <span id="driftStatusTag" class="text-xs px-2 py-0.5 rounded font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">NOMINAL</span>
+            </div>
+
+            <div class="text-center py-4">
+              <div id="driftBigVal" class="font-orbitron font-black text-5xl text-hud-cyan glow-text transition-colors">
+                12.0<span class="text-xl">%</span>
+              </div>
+              <p class="text-xs text-slate-400 font-mono mt-1">Stagnation / Habit Decay Rate</p>
+            </div>
+
+            <!-- Stagnation Gauge Bar -->
+            <div class="space-y-2 mt-2">
+              <div class="h-4 bg-slate-900 rounded-md overflow-hidden border border-slate-800 p-0.5 relative">
+                <div id="driftBarFull" class="h-full bg-gradient-to-r from-hud-cyan via-amber-400 to-hud-warning rounded transition-all duration-300" style="width: 12%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] font-mono text-slate-500">
+                <span>0% (Optimal)</span>
+                <span>50% (Amber Warning)</span>
+                <span>80%+ (Critical Alert)</span>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-300 font-mono mt-4 leading-relaxed">
+              Drift increases automatically over time if daily quests remain incomplete. High drift triggers warning scanlines and systemic stat penalties.
+            </p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs font-mono">
+            <span class="text-slate-400">Drift Decay Action:</span>
+            <button onclick="applyManualDriftReduce()" class="px-3 py-1.5 rounded bg-hud-indigo hover:bg-indigo-700 text-hud-cyan border border-hud-cyan/40 transition">
+              Flush System Drift (-10%)
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Core Stat Allocator Controls -->
+      <div class="hud-box p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h3 class="font-orbitron text-lg text-white font-bold">CORE MONARCH PARAMETERS</h3>
+            <p class="text-xs text-slate-400 font-mono">Distribute earned stat points to upgrade physical and engineering capabilities.</p>
+          </div>
+          <div class="text-xs font-mono text-slate-400">
+            Points Left: <span id="pointsBadge" class="text-hud-cyan font-bold text-sm">0</span>
+          </div>
+        </div>
+
+        <div id="statListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <!-- Stat cards rendered dynamically via JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: DAILY AWAKENING QUESTS & FAILS -->
+    <div id="view-quests" class="tab-view space-y-6 hidden">
+      
+      <!-- Top Bar: Reset Countdown & Quest Stats -->
+      <div class="hud-box p-5 rounded-lg flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <span class="text-xs font-mono text-hud-cyan uppercase tracking-wider block">DAILY NON-NEGOTIABLE CYCLE</span>
+          <h2 class="font-orbitron text-xl font-bold text-white">THE DAILY AWAKENING ENGINE</h2>
+        </div>
+        
+        <div class="flex items-center space-x-6 font-mono">
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block">MIDNIGHT RESET COUNTDOWN</span>
+            <span id="questResetTimer" class="font-orbitron font-bold text-lg text-hud-cyan">23:59:59</span>
+          </div>
+          <button onclick="openCustomQuestModal()" class="px-4 py-2 rounded bg-hud-indigo hover:bg-indigo-600 text-hud-cyan border border-hud-cyan/40 font-orbitron text-xs font-bold transition shadow-glow-cyan">
+            + CUSTOM QUEST
+          </button>
+        </div>
+      </div>
+
+      <!-- Quests List Grid -->
+      <div id="questContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Daily quest cards injected via JS -->
+      </div>
+
+      <!-- FAIL-FORWARD MASTERY & ITERATION DEBUGGER -->
+      <div class="hud-box p-6 rounded-lg border-hud-warning/40">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-hud-warning/20 text-hud-warning border border-hud-warning/40">
+                FAIL-FORWARD MASTERY
+              </span>
+              <h3 class="font-orbitron text-lg text-white font-bold">HARDWARE & ATHLETIC ITERATION DEBUGGER</h3>
+            </div>
+            <p class="text-xs text-slate-400 font-mono mt-1">
+              Failed firmware flashes, MCU hardware bugs, drop-offs in planche holds, or bouldering falls are non-negotiable raw data. Convert iterations into +25 XP.
+            </p>
+          </div>
+        </div>
+
+        <!-- Debug Logger Input Form -->
+        <form id="failForwardForm" onsubmit="handleFailForwardSubmit(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div class="md:col-span-3">
+            <label class="block text-[10px] font-mono text-slate-400 mb-1">ITERATION DOMAIN</label>
+            <select id="failDomain" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs font-mono text-slate-200 focus:border-hud-cyan focus:outline-none">
+              <option value="Embedded Firmware">Embedded C/C++ / Firmware</option>
+              <option value="PCB / Hardware Design">PCB Hardware / Schematics</option>
+              <option value="Calisthenics Isometric">Isometric Hold / Calisthenics</option>
+              <option value="Bouldering Fall">Bouldering Attempt / Fall</option>
+              <option value="Chaotic Engineering">Chaotic/Absurd Tech Build</option>
+            </select>
+          </div>
+          <div class="md:col-span-4">
+            <label class="block text-[10px] font-mono text-slate-400 mb-1">FAILURE / BUG DESCRIPTION</label>
+            <input type="text" id="failTitle" required placeholder="e.g., STM32 DMA buffer stack overflow under load" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs font-mono text-slate-200 focus:border-hud-cyan focus:outline-none" />
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-[10px] font-mono text-slate-400 mb-1">LESSON / FIX LESSON LEARNED</label>
+            <input type="text" id="failLesson" required placeholder="e.g., Allocate double buffer ring buffer in SRAM" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs font-mono text-slate-200 focus:border-hud-cyan focus:outline-none" />
+          </div>
+          <div class="md:col-span-2 flex items-end">
+            <button type="submit" class="w-full py-2 px-3 rounded bg-hud-warning hover:bg-rose-600 text-white font-orbitron text-xs font-bold transition shadow-glow-red">
+              LOG FAIL (+25 XP)
+            </button>
+          </div>
+        </form>
+
+        <!-- Recent Iteration Log Table Snippet -->
+        <div class="mt-6 overflow-x-auto">
+          <table class="w-full text-left font-mono text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 text-[11px]">
+                <th class="py-2 px-3">TIMESTAMP</th>
+                <th class="py-2 px-3">DOMAIN</th>
+                <th class="py-2 px-3">FAILURE / BUG</th>
+                <th class="py-2 px-3">LESSON LEARNED</th>
+                <th class="py-2 px-3 text-right">REWARD</th>
+              </tr>
+            </thead>
+            <tbody id="failLogTableBody" class="divide-y divide-slate-800/50">
+              <!-- JS Injected rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 3: ATHLETIC TELEMETRY MODULE -->
+    <div id="view-telemetry" class="tab-view space-y-6 hidden">
+      
+      <!-- Isometric Hold Timer & Metronome HUD -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Live Hold Timer Box (7 cols) -->
+        <div class="lg:col-span-7 hud-box p-6 rounded-lg flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <span class="text-xs font-mono text-hud-cyan uppercase tracking-wider">TIME-UNDER-TENSION TELEMETRY</span>
+                <h3 class="font-orbitron text-xl font-bold text-white">ISOMETRIC HOLD TIMER & METRONOME</h3>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-mono text-slate-400">BPM:</span>
+                <select id="metronomeBpmSelect" onchange="updateBpmSetting(this.value)" class="bg-slate-900 border border-slate-700 text-xs font-mono text-hud-cyan rounded px-2 py-1 focus:outline-none">
+                  <option value="60">60 BPM (1s tick)</option>
+                  <option value="120">120 BPM (0.5s tick)</option>
+                  <option value="40">40 BPM (Slow hold)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Big Timer Display -->
+            <div class="text-center py-6 bg-slate-950/60 rounded border border-slate-800 my-2">
+              <div id="isoHoldDisplay" class="font-orbitron font-black text-6xl sm:text-7xl text-hud-cyan glow-text tracking-widest">
+                00:00.0
+              </div>
+              <span id="isoSkillBadge" class="text-xs font-mono text-slate-400 mt-2 block">SELECTED SKILL: FULL PLANCHE</span>
+            </div>
+
+            <!-- Skill Selector Buttons -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 my-4">
+              <button onclick="selectIsoSkill('Full Planche')" class="iso-skill-btn px-3 py-2 rounded text-xs font-mono bg-hud-indigo text-hud-cyan border border-hud-cyan/40">Full Planche</button>
+              <button onclick="selectIsoSkill('Front Lever')" class="iso-skill-btn px-3 py-2 rounded text-xs font-mono bg-slate-900 text-slate-400 border border-slate-800">Front Lever</button>
+              <button onclick="selectIsoSkill('One-Arm Lock-off')" class="iso-skill-btn px-3 py-2 rounded text-xs font-mono bg-slate-900 text-slate-400 border border-slate-800">One-Arm Lock</button>
+              <button onclick="selectIsoSkill('Human Flag')" class="iso-skill-btn px-3 py-2 rounded text-xs font-mono bg-slate-900 text-slate-400 border border-slate-800">Human Flag</button>
+            </div>
+          </div>
+
+          <!-- Timer Controls & Logging -->
+          <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-slate-800">
+            <button id="btnStartIso" onclick="toggleIsoTimer()" class="flex-1 py-3 px-4 rounded bg-hud-cyan hover:bg-cyan-400 text-obsidian font-orbitron font-bold text-sm tracking-wider transition shadow-glow-cyan">
+              START TIMER & TICK
+            </button>
+            <button onclick="resetIsoTimer()" class="py-3 px-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs transition">
+              RESET
+            </button>
+            <button onclick="saveIsoTelemetryEntry()" class="py-3 px-4 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-orbitron text-xs font-bold transition">
+              LOG HOLD RECORD
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Inputs: Joint Angles & RPE Form (5 cols) -->
+        <div class="lg:col-span-5 hud-box p-6 rounded-lg flex flex-col justify-between">
+          <div>
+            <h3 class="font-orbitron text-lg font-bold text-white mb-1">BIOMECHANICAL METRICS</h3>
+            <p class="text-xs text-slate-400 font-mono mb-4">Record joint kinematics & perceived exertion for precision calibration.</p>
+
+            <div class="space-y-4 font-mono text-xs">
+              <div>
+                <label class="block text-slate-400 mb-1">JOINT ANGLE KINEMATICS (°)</label>
+                <input type="number" id="telemetryJointAngle" placeholder="e.g., 180° (Lockout) or 90°" value="180" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:border-hud-cyan focus:outline-none" />
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <label class="text-slate-400">RPE RATING (1 - 10)</label>
+                  <span id="rpeValDisplay" class="text-hud-cyan font-bold">8 / 10</span>
+                </div>
+                <input type="range" id="telemetryRPE" min="1" max="10" value="8" oninput="document.getElementById('rpeValDisplay').innerText = this.value + ' / 10'" class="w-full accent-hud-cyan bg-slate-800 rounded h-2" />
+              </div>
+
+              <div>
+                <label class="block text-slate-400 mb-1">TELEMETRY NOTES / FORM QUALITY</label>
+                <textarea id="telemetryNotes" rows="2" placeholder="e.g., Protraction strong, slight hip dip on 12th second" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:border-hud-cyan focus:outline-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-slate-900/60 rounded border border-slate-800 text-[11px] text-slate-400 font-mono mt-4">
+            💡 <strong class="text-slate-200">System Tip:</strong> Logging isometric holds above 8s at RPE 8+ yields optimal STR stat gain ratio.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bouldering V-Grade & Climbing Log -->
+      <div class="hud-box p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <span class="text-xs font-mono text-hud-cyan uppercase">CLIMBING & MANEUVERABILITY ENGINE</span>
+            <h3 class="font-orbitron text-lg text-white font-bold">BOULDERING V-GRADE LOG & SENT LOG</h3>
+          </div>
+          <button onclick="openBoulderingModal()" class="px-3 py-1.5 rounded bg-hud-indigo hover:bg-indigo-600 text-hud-cyan border border-hud-cyan/40 font-orbitron text-xs font-bold transition">
+            + LOG BOULDER
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="py-2 px-3">DATE</th>
+                <th class="py-2 px-3">V-GRADE</th>
+                <th class="py-2 px-3">WALL ANGLE</th>
+                <th class="py-2 px-3">OUTCOME</th>
+                <th class="py-2 px-3">BETA NOTES</th>
+                <th class="py-2 px-3 text-right">STAT GAIN</th>
+              </tr>
+            </thead>
+            <tbody id="boulderingTableBody" class="divide-y divide-slate-800/50">
+              <!-- JS Injected Rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 4: HARDWARE & TECHNICAL BUILD LOGS -->
+    <div id="view-projects" class="tab-view space-y-6 hidden">
+      
+      <!-- Top Bar: Embedded Projects Title & Create Button -->
+      <div class="hud-box p-5 rounded-lg flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <span class="text-xs font-mono text-hud-cyan uppercase tracking-wider block">TECHNICAL MASTERY PIPELINE</span>
+          <h2 class="font-orbitron text-xl font-bold text-white">EMBEDDED HARDWARE & CHAOTIC TECH LOGS</h2>
+        </div>
+        <button onclick="openNewProjectModal()" class="px-4 py-2 rounded bg-hud-cyan hover:bg-cyan-400 text-obsidian font-orbitron text-xs font-bold transition shadow-glow-cyan">
+          + REGISTER NEW BUILD
+        </button>
+      </div>
+
+      <!-- Projects Grid -->
+      <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- JS Injected Project Cards -->
+      </div>
+
+    </div>
+
+    <!-- TAB 5: SYSTEM DATA LEDGER & BACKUP -->
+    <div id="view-logs" class="tab-view space-y-6 hidden">
+      
+      <div class="hud-box p-6 rounded-lg">
+        <h3 class="font-orbitron text-lg font-bold text-white mb-2">SYSTEM PERSISTENCE & DATA MANAGEMENT</h3>
+        <p class="text-xs text-slate-400 font-mono mb-6">
+          All System stats, daily quests, firmware revision logs, and telemetry are stored locally in web LocalStorage. Export your state JSON file for cloud sync or offline safety.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+          <div class="p-4 rounded bg-slate-900 border border-slate-800 space-y-2">
+            <span class="text-hud-cyan font-bold block">EXPORT SYSTEM STATE</span>
+            <p class="text-slate-400 text-[11px]">Download full JSON snapshot of all stats, logs, and build histories.</p>
+            <button onclick="exportSystemData()" class="w-full py-2 px-3 rounded bg-hud-indigo hover:bg-indigo-600 text-hud-cyan border border-hud-cyan/40 font-orbitron font-bold transition">
+              DOWNLOAD JSON BACKUP
+            </button>
+          </div>
+
+          <div class="p-4 rounded bg-slate-900 border border-slate-800 space-y-2">
+            <span class="text-hud-cyan font-bold block">RESTORE FROM JSON</span>
+            <p class="text-slate-400 text-[11px]">Import existing backup file to restore complete system metrics.</p>
+            <input type="file" id="importJsonInput" accept=".json" onchange="importSystemData(event)" class="hidden" />
+            <button onclick="document.getElementById('importJsonInput').click()" class="w-full py-2 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 font-orbitron font-bold transition">
+              LOAD JSON FILE
+            </button>
+          </div>
+
+          <div class="p-4 rounded bg-slate-900 border border-slate-800 space-y-2">
+            <span class="text-hud-warning font-bold block">HARD SYSTEM RESET</span>
+            <p class="text-slate-400 text-[11px]">Wipe all data and return to Level 1 Shadow Architect initialization.</p>
+            <button onclick="confirmHardReset()" class="w-full py-2 px-3 rounded bg-hud-warning/20 hover:bg-hud-warning/40 text-hud-warning border border-hud-warning/40 font-orbitron font-bold transition">
+              FACTORY SYSTEM RESET
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full System Activity Audit Ledger -->
+      <div class="hud-box p-6 rounded-lg">
+        <h3 class="font-orbitron text-lg font-bold text-white mb-4">SYSTEM ACTIVITY AUDIT LEDGER</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="py-2 px-3">TIMESTAMP</th>
+                <th class="py-2 px-3">EVENT TYPE</th>
+                <th class="py-2 px-3">DESCRIPTION</th>
+                <th class="py-2 px-3 text-right">XP IMPACT</th>
+              </tr>
+            </thead>
+            <tbody id="systemLedgerBody" class="divide-y divide-slate-800/50">
+              <!-- JS Injected audit logs -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- MODALS CONTAINER -->
+  
+  <!-- Custom Quest Modal -->
+  <div id="modalCustomQuest" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="hud-box p-6 rounded-lg max-w-md w-full space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="font-orbitron font-bold text-white text-lg">CREATE CUSTOM DAILY QUEST</h3>
+        <button onclick="closeModal('modalCustomQuest')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleCreateCustomQuest(event)" class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">QUEST TITLE</label>
+          <input type="text" id="custQuestTitle" required placeholder="e.g., 100 Non-Stop Explosive Muscle Ups" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">TARGET CATEGORY</label>
+          <select id="custQuestCategory" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan">
+            <option value="STR">Physical Movement (STR)</option>
+            <option value="AGI">Climbing / Agility (AGI)</option>
+            <option value="INT">Embedded Firmware / Logic (INT)</option>
+            <option value="VIT">Vitality / Recovery (VIT)</option>
+            <option value="LGC">Hardware Builds / Impact (LGC)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">XP REWARD</label>
+          <input type="number" id="custQuestXP" value="100" min="20" max="500" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan" />
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modalCustomQuest')" class="px-4 py-2 rounded bg-slate-800 text-slate-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded bg-hud-cyan text-obsidian font-orbitron font-bold">CREATE QUEST</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bouldering Log Modal -->
+  <div id="modalBouldering" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="hud-box p-6 rounded-lg max-w-md w-full space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="font-orbitron font-bold text-white text-lg">LOG BOULDERING ATTEMPT</h3>
+        <button onclick="closeModal('modalBouldering')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleLogBoulderingSubmit(event)" class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">V-GRADE</label>
+          <select id="boulderGrade" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan">
+            <option value="V1">V1 - Beginner</option>
+            <option value="V3">V3 - Intermediate</option>
+            <option value="V5">V5 - Advanced</option>
+            <option value="V7">V7 - Expert Hard</option>
+            <option value="V9">V9 - Elite</option>
+            <option value="V11">V11 - Master</option>
+            <option value="V13">V13+ - Monarch Grade</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">WALL ANGLE</label>
+          <select id="boulderAngle" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan">
+            <option value="45° Overhang Roof">45° Overhang / Roof</option>
+            <option value="Vertical Slab">Vertical Precision Slab</option>
+            <option value="Cave Dyno Problem">Cave Dyno / Compression</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">OUTCOME</label>
+          <select id="boulderOutcome" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan">
+            <option value="Flash (1st Try)">Flash (1st Try Sent)</option>
+            <option value="Sent (Multiple Attempts)">Sent (Multiple Attempts)</option>
+            <option value="Iteration Drop / Fall">Iteration Fall / Highpoint</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">BETA NOTES</label>
+          <input type="text" id="boulderNotes" placeholder="e.g., Heel hook left micro-edge, dynamic deadpoint to crimp" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan" />
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modalBouldering')" class="px-4 py-2 rounded bg-slate-800 text-slate-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded bg-hud-indigo text-hud-cyan border border-hud-cyan/40 font-orbitron font-bold">LOG BOULDER</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New Project Registration Modal -->
+  <div id="modalProject" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="hud-box p-6 rounded-lg max-w-lg w-full space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="font-orbitron font-bold text-white text-lg">REGISTER EMBEDDED / CHAOTIC BUILD</h3>
+        <button onclick="closeModal('modalProject')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleNewProjectSubmit(event)" class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">PROJECT NAME</label>
+          <input type="text" id="projName" required placeholder="e.g., STM32 Autonomous Planche Force Balance Platform" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">PRIMARY CATEGORY</label>
+            <select id="projCategory" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan">
+              <option value="Firmware">Bare-Metal Firmware (C/C++)</option>
+              <option value="PCB Schematic">PCB Schematic & Layout</option>
+              <option value="CAD Model">3D CAD / Mechanical Design</option>
+              <option value="Chaotic Tech">Chaotic / Absurd Tech Project</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">INITIAL REVISION</label>
+            <input type="text" id="projRev" value="v1.0.0-alpha" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">ARCHITECTURAL BRIEF</label>
+          <textarea id="projDesc" rows="3" required placeholder="High-level description of hardware, microcontrollers (ESP32/STM32/RP2040), or sensors utilized..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-hud-cyan"></textarea>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modalProject')" class="px-4 py-2 rounded bg-slate-800 text-slate-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded bg-hud-cyan text-obsidian font-orbitron font-bold">REGISTER PROJECT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="hud-box border-t border-hud-border py-3 px-4 text-center font-mono text-[11px] text-slate-500">
+    SYSTEM // SHADOW ARCHITECT ENGINE v3.4 — HIGH-PERFORMANCE EMBEDDED & ATHLETIC OPERATIONAL INTERFACE
+  </footer>
+
+  <script>
+    const STORAGE_KEY = 'SOLO_LEVELING_SHADOW_SYSTEM_V1';
+
+    // Core System State
+    let state = {
+      player: {
+        title: 'THE SHADOW ARCHITECT',
+        level: 1,
+        xp: 0,
+        statPoints: 0,
+        totalXpEarned: 0
+      },
+      stats: {
+        STR: 18, // Strength / Isometric Heavy Volume
+        AGI: 16, // Agility / Bouldering & Mobility
+        INT: 22, // Intelligence / Embedded C/C++ Logic
+        VIT: 15, // Vitality / Recovery & Consistency
+        LGC: 12  // Legacy / Shipped Projects & Impact
+      },
+      drift: {
+        ratePercent: 12.0,
+        lastTick: Date.now()
+      },
+      quests: [
+        {
+          id: 'q1',
+          title: '30 MIN ISOMETRIC PLANCHE / LEVER DRILLS',
+          category: 'STR',
+          rewardXP: 120,
+          rewardStat: 'STR',
+          completed: false
+        },
+        {
+          id: 'q2',
+          title: '2 HOURS DEEP C/C++ BARE-METAL FIRMWARE ARCH',
+          category: 'INT',
+          rewardXP: 150,
+          rewardStat: 'INT',
+          completed: false
+        },
+        {
+          id: 'q3',
+          title: '1 HOUR PCB LAYOUT & SCHEMATIC ROUTING REVIEW',
+          category: 'LGC',
+          rewardXP: 100,
+          rewardStat: 'LGC',
+          completed: false
+        },
+        {
+          id: 'q4',
+          title: 'HIGH-INTENSITY MOBILITY & WRIST CONDITIONING',
+          category: 'VIT',
+          rewardXP: 80,
+          rewardStat: 'VIT',
+          completed: false
+        }
+      ],
+      iterations: [
+        {
+          id: 'f1',
+          timestamp: new Date().toLocaleTimeString(),
+          domain: 'Embedded Firmware',
+          title: 'STM32 DMA Interrupt Buffer Overflow',
+          lesson: 'Allocated double ring-buffer in SRAM2 memory bank',
+          xpGained: 25
+        }
+      ],
+      telemetry: {
+        isometricLogs: [],
+        boulderingLogs: [
+          {
+            id: 'b1',
+            date: new Date().toLocaleDateString(),
+            grade: 'V7',
+            angle: '45° Overhang Roof',
+            outcome: 'Sent (Multiple Attempts)',
+            notes: 'Strong heel hook left micro-edge'
+          }
+        ]
+      },
+      projects: [
+        {
+          id: 'p1',
+          name: 'STM32-H7 HIGH-SPEED HARDWARE TELEMETRY MCU',
+          category: 'Firmware',
+          revision: 'v1.2.0-rc1',
+          status: 'In Progress',
+          desc: 'High-frequency CAN-bus sensor telemetry reader running FreeRTOS with sub-millisecond execution loops.',
+          revisions: [
+            { rev: 'v1.0.0', notes: 'Initial board bring-up and SPI driver configuration.', date: '2026-09-15' },
+            { rev: 'v1.2.0-rc1', notes: 'Integrated DMA dual-buffering for CAN-FD payload packetization.', date: '2026-10-02' }
+          ]
+        },
+        {
+          id: 'p2',
+          name: 'CHAOTIC LASER-GUIDED AUTOMATED DESK DEFENSE MCU',
+          category: 'Chaotic Tech',
+          revision: 'v2.0.4',
+          status: 'Shipped',
+          desc: 'Absurd engineering build: Dual stepper motor turret driven by OpenCV tracking and RP2040 micro-controller.',
+          revisions: [
+            { rev: 'v2.0.4', notes: 'Shipped build. Added emergency manual override toggle.', date: '2026-09-28' }
+          ]
+        }
+      ],
+      ledger: [
+        { timestamp: new Date().toLocaleTimeString(), type: 'SYSTEM_INIT', desc: 'Shadow Architect Engine initialized online.', xp: 0 }
+      ],
+      settings: {
+        soundEnabled: true,
+        scanlines: true,
+        metronomeBpm: 60
+      }
+    };
+
+    // Web Audio Synthesizer Class (Zero external sound files needed)
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSynthSound(type) {
+      if (!state.settings.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        if (type === 'click') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'reward') {
+          // Dual synth chime
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.3);
+          });
+        } else if (type === 'levelUp') {
+          // High synth fanfare
+          const freqs = [440, 554.37, 659.25, 880, 1108.73, 1318.51];
+          freqs.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.4);
+          });
+        } else if (type === 'failForward') {
+          // Glitchy sweep
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'tick') {
+          // Metronome tick
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1200, now);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.03);
+        }
+      } catch (e) {
+        console.warn("Audio Context init pending user gesture.");
+      }
+    }
+
+    // Non-Linear XP Equation: XP Required = 100 * (Level ^ 1.5)
+    function getXpRequired(level) {
+      return Math.round(100 * Math.pow(level, 1.5));
+    }
+
+    function addXP(amount, sourceReason) {
+      state.player.xp += amount;
+      state.player.totalXpEarned += amount;
+
+      // Reduce Drift whenever active effort is logged
+      state.drift.ratePercent = Math.max(0, state.drift.ratePercent - 2.5);
+
+      // Trigger floating XP popup
+      showXpPopup(`+${amount} XP`);
+      playSynthSound('reward');
+
+      // Check for Level Up loop
+      let req = getXpRequired(state.player.level);
+      while (state.player.xp >= req) {
+        state.player.xp -= req;
+        state.player.level++;
+        state.player.statPoints += 5; // +5 Unallocated stat points per level
+        
+        // Evolve Title dynamically
+        updatePlayerTitle();
+
+        showToast(`LEVEL UP! REACHED LEVEL ${state.player.level}`, 'cyan');
+        playSynthSound('levelUp');
+        
+        logLedger('LEVEL_UP', `Monarch Level Up to Level ${state.player.level}`, amount);
+        req = getXpRequired(state.player.level);
+      }
+
+      logLedger('XP_GAIN', `Earned +${amount} XP from ${sourceReason}`, amount);
+      saveState();
+      renderUI();
+    }
+
+    function updatePlayerTitle() {
+      const lvl = state.player.level;
+      if (lvl >= 15) {
+        state.player.title = "LEVEL " + lvl + " EMBEDDED MONARCH";
+      } else if (lvl >= 10) {
+        state.player.title = "CLASS-S BARE-METAL ARCHITECT";
+      } else if (lvl >= 5) {
+        state.player.title = "SHADOW ISOMETRIC MASTER";
+      } else {
+        state.player.title = "THE SHADOW ARCHITECT";
+      }
+    }
+
+    function drawRadarChart() {
+      const canvas = document.getElementById('radarCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = 100;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const keys = ['STR', 'AGI', 'INT', 'VIT', 'LGC'];
+      const maxVal = 50; // Reference max scale
+      const numSides = keys.length;
+      const angleStep = (Math.PI * 2) / numSides;
+
+      // Draw Grid Webs
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.15)';
+      ctx.lineWidth = 1;
+
+      for (let level = 1; level <= 4; level++) {
+        const r = (radius / 4) * level;
+        ctx.beginPath();
+        for (let i = 0; i < numSides; i++) {
+          const angle = i * angleStep - Math.PI / 2;
+          const x = centerX + r * Math.cos(angle);
+          const y = centerY + r * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      // Draw Axis Lines & Labels
+      ctx.font = '11px Orbitron, sans-serif';
+      ctx.fillStyle = '#00E5FF';
+      ctx.textAlign = 'center';
+
+      keys.forEach((key, i) => {
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)';
+        ctx.stroke();
+
+        // Label Position
+        const lx = centerX + (radius + 22) * Math.cos(angle);
+        const ly = centerY + (radius + 18) * Math.sin(angle);
+        const val = state.stats[key] || 0;
+        ctx.fillText(`${key} (${val})`, lx, ly + 4);
+      });
+
+      // Draw Polygon Data Path
+      ctx.beginPath();
+      keys.forEach((key, i) => {
+        const val = Math.min(maxVal, state.stats[key] || 0);
+        const r = (val / maxVal) * radius;
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + r * Math.cos(angle);
+        const y = centerY + r * Math.sin(angle);
+
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+
+      // Glowing Neon Cyan Fill
+      ctx.fillStyle = 'rgba(0, 229, 255, 0.25)';
+      ctx.fill();
+      ctx.strokeStyle = '#00E5FF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw Glowing Vertex Dots
+      keys.forEach((key, i) => {
+        const val = Math.min(maxVal, state.stats[key] || 0);
+        const r = (val / maxVal) * radius;
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + r * Math.cos(angle);
+        const y = centerY + r * Math.sin(angle);
+
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowColor = '#00E5FF';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0; // Reset
+      });
+    }
+
+    function renderUI() {
+      // Header Updates
+      document.getElementById('hdrLevel').innerText = state.player.level;
+      document.getElementById('displayLevel').innerText = state.player.level;
+      document.getElementById('playerTitleDisplay').innerHTML = `${state.player.title} <span class="text-xs text-hud-cyan font-normal ml-1">[LVL ${state.player.level}]</span>`;
+      document.getElementById('cardTitle').innerText = state.player.title;
+
+      // XP Calculations
+      const reqXP = getXpRequired(state.player.level);
+      document.getElementById('currXP').innerText = state.player.xp;
+      document.getElementById('reqXP').innerText = reqXP;
+      const xpPct = Math.min(100, Math.round((state.player.xp / reqXP) * 100));
+      document.getElementById('xpProgressBar').style.width = `${xpPct}%`;
+
+      // Stat Points
+      document.getElementById('statPointsDisplay').innerText = state.player.statPoints;
+      document.getElementById('pointsBadge').innerText = state.player.statPoints;
+
+      // Passive Drift Header & Box Updates
+      const driftVal = state.drift.ratePercent.toFixed(1);
+      document.getElementById('driftRatePercent').innerText = `${driftVal}%`;
+      document.getElementById('driftBigVal').innerText = `${driftVal}%`;
+      document.getElementById('driftBarHeader').style.width = `${driftVal}%`;
+      document.getElementById('driftBarFull').style.width = `${driftVal}%`;
+
+      // Drift Alert styling
+      const driftTag = document.getElementById('driftStatusTag');
+      const driftBox = document.getElementById('driftMonitorBox');
+      if (state.drift.ratePercent > 60) {
+        driftTag.innerText = 'CRITICAL DRIFT';
+        driftTag.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-hud-warning/20 text-hud-warning border border-hud-warning/40 animate-pulse';
+        driftBox.classList.add('hud-box-warning');
+      } else if (state.drift.ratePercent > 35) {
+        driftTag.innerText = 'AMBER DRIFT';
+        driftTag.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+        driftBox.classList.remove('hud-box-warning');
+      } else {
+        driftTag.innerText = 'NOMINAL';
+        driftTag.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+        driftBox.classList.remove('hud-box-warning');
+      }
+
+      // Render Stat Grid
+      renderStatList();
+
+      // Render Quests
+      renderQuests();
+
+      // Render Iteration Logs
+      renderFailLogs();
+
+      // Render Bouldering Logs
+      renderBoulderingLogs();
+
+      // Render Projects
+      renderProjects();
+
+      // Render Ledger
+      renderLedger();
+
+      // Draw Canvas Radar Chart
+      setTimeout(drawRadarChart, 50);
+    }
+
+    function renderStatList() {
+      const grid = document.getElementById('statListGrid');
+      if (!grid) return;
+
+      const statDescriptions = {
+        STR: 'Strength & Isometric Planche / Lever Volume',
+        AGI: 'Agility & Bouldering Dynos / Climbing Maneuverability',
+        INT: 'Intelligence & Bare-Metal C/C++ Embedded Logic',
+        VIT: 'Vitality & Recovery Consistency & Wrist Health',
+        LGC: 'Legacy & Shipped Hardware / External Impact'
+      };
+
+      grid.innerHTML = Object.keys(state.stats).map(statKey => {
+        const val = state.stats[statKey];
+        const canAdd = state.player.statPoints > 0;
+        return `
+          <div class="p-4 rounded bg-slate-900/80 border border-slate-800 hover:border-hud-cyan/40 transition flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center">
+                <span class="font-orbitron font-extrabold text-lg text-hud-cyan">${statKey}</span>
+                <span class="font-mono text-xl font-bold text-white">${val}</span>
+              </div>
+              <p class="text-[10px] text-slate-400 font-mono mt-1 leading-tight">${statDescriptions[statKey]}</p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-800 flex justify-between items-center">
+              <span class="text-[10px] text-slate-500 font-mono">LEVEL VALUE</span>
+              <button onclick="allocateStatPoint('${statKey}')" ${!canAdd ? 'disabled' : ''} class="px-2.5 py-1 rounded text-xs font-mono font-bold ${canAdd ? 'bg-hud-cyan text-obsidian hover:bg-cyan-300 shadow-glow-cyan' : 'bg-slate-800 text-slate-600 cursor-not-allowed'} transition">
+                +1 UP
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function allocateStatPoint(statKey) {
+      if (state.player.statPoints > 0) {
+        state.player.statPoints--;
+        state.stats[statKey]++;
+        playSynthSound('click');
+        showToast(`Allocated +1 to ${statKey}`, 'cyan');
+        logLedger('STAT_ALLOC', `Allocated +1 point to ${statKey} (Now ${state.stats[statKey]})`, 0);
+        saveState();
+        renderUI();
+      }
+    }
+
+    function resetStatsConfirmation() {
+      const totalPoints = Object.values(state.stats).reduce((a, b) => a + b, 0);
+      // Default base sum is 83
+      const spentExtra = totalPoints - 83;
+      if (spentExtra > 0) {
+        state.player.statPoints += spentExtra;
+        state.stats = { STR: 18, AGI: 16, INT: 22, VIT: 15, LGC: 12 };
+        playSynthSound('click');
+        showToast('Stat points reset to pool', 'cyan');
+        saveState();
+        renderUI();
+      } else {
+        showToast('No allocated points to reset', 'amber');
+      }
+    }
+
+    function renderQuests() {
+      const container = document.getElementById('questContainer');
+      if (!container) return;
+
+      container.innerHTML = state.quests.map(q => {
+        return `
+          <div class="hud-box p-4 rounded-lg flex flex-col justify-between ${q.completed ? 'opacity-60 border-emerald-500/30' : ''}">
+            <div>
+              <div class="flex justify-between items-start">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-hud-indigo text-hud-cyan border border-hud-cyan/30">
+                  +${q.rewardXP} XP // ${q.category}
+                </span>
+                ${q.completed ? '<span class="text-xs font-mono font-bold text-emerald-400">✓ QUEST COMPLETED</span>' : '<span class="text-xs font-mono text-amber-400">PENDING EXECUTION</span>'}
+              </div>
+              <h4 class="font-orbitron font-bold text-white text-sm mt-3">${q.title}</h4>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center">
+              <span class="text-xs text-slate-400 font-mono">REWARD: +1 ${q.rewardStat} STAT</span>
+              ${!q.completed ? `
+                <button onclick="claimQuest('${q.id}')" class="px-4 py-1.5 rounded bg-hud-cyan hover:bg-cyan-300 text-obsidian font-orbitron text-xs font-bold transition shadow-glow-cyan">
+                  CLAIM REWARD
+                </button>
+              ` : `
+                <button disabled class="px-4 py-1.5 rounded bg-slate-800 text-slate-600 font-orbitron text-xs cursor-not-allowed">
+                  EXECUTED
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function claimQuest(questId) {
+      const q = state.quests.find(item => item.id === questId);
+      if (q && !q.completed) {
+        q.completed = true;
+        state.stats[q.rewardStat] += 1;
+        addXP(q.rewardXP, `Quest: ${q.title}`);
+        showToast(`Quest Cleared! +${q.rewardXP} XP & +1 ${q.rewardStat}`, 'cyan');
+      }
+    }
+
+    function handleFailForwardSubmit(e) {
+      e.preventDefault();
+      const domain = document.getElementById('failDomain').value;
+      const title = document.getElementById('failTitle').value.trim();
+      const lesson = document.getElementById('failLesson').value.trim();
+
+      if (!title || !lesson) return;
+
+      const newFail = {
+        id: 'f_' + Date.now(),
+        timestamp: new Date().toLocaleTimeString(),
+        domain: domain,
+        title: title,
+        lesson: lesson,
+        xpGained: 25
+      };
+
+      state.iterations.unshift(newFail);
+      playSynthSound('failForward');
+      addXP(25, `Fail-Forward Debug: ${title}`);
+      showToast('Iteration Logged! +25 XP Fail-Forward Mastery', 'cyan');
+
+      document.getElementById('failTitle').value = '';
+      document.getElementById('failLesson').value = '';
+      renderUI();
+    }
+
+    function renderFailLogs() {
+      const table = document.getElementById('failLogTableBody');
+      if (!table) return;
+
+      if (state.iterations.length === 0) {
+        table.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-500">No iteration failures logged yet. Fail forward to earn XP!</td></tr>`;
+        return;
+      }
+
+      table.innerHTML = state.iterations.slice(0, 5).map(item => `
+        <tr class="hover:bg-slate-900/50">
+          <td class="py-2.5 px-3 text-slate-400">${item.timestamp}</td>
+          <td class="py-2.5 px-3"><span class="text-hud-cyan">${item.domain}</span></td>
+          <td class="py-2.5 px-3 text-slate-200 font-semibold">${item.title}</td>
+          <td class="py-2.5 px-3 text-slate-400 italic">${item.lesson}</td>
+          <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">+25 XP</td>
+        </tr>
+      `).join('');
+    }
+
+    let isoInterval = null;
+    let isoSeconds = 0;
+    let isoRunning = false;
+    let selectedSkill = 'Full Planche';
+
+    function selectIsoSkill(skillName) {
+      selectedSkill = skillName;
+      document.getElementById('isoSkillBadge').innerText = `SELECTED SKILL: ${skillName.toUpperCase()}`;
+      
+      // Update button styling
+      document.querySelectorAll('.iso-skill-btn').forEach(btn => {
+        if (btn.innerText.includes(skillName.split(' ')[0])) {
+          btn.className = 'iso-skill-btn px-3 py-2 rounded text-xs font-mono bg-hud-indigo text-hud-cyan border border-hud-cyan/40';
+        } else {
+          btn.className = 'iso-skill-btn px-3 py-2 rounded text-xs font-mono bg-slate-900 text-slate-400 border border-slate-800';
+        }
+      });
+    }
+
+    function toggleIsoTimer() {
+      const btn = document.getElementById('btnStartIso');
+      if (!isoRunning) {
+        isoRunning = true;
+        btn.innerText = 'PAUSE HOLD TIMER';
+        btn.className = 'flex-1 py-3 px-4 rounded bg-hud-warning text-white font-orbitron font-bold text-sm transition shadow-glow-red';
+
+        const bpm = parseInt(state.settings.metronomeBpm) || 60;
+        const tickIntervalMs = (60 / bpm) * 1000;
+
+        let lastTickTime = Date.now();
+
+        isoInterval = setInterval(() => {
+          isoSeconds += 0.1;
+          const display = document.getElementById('isoHoldDisplay');
+          const mins = Math.floor(isoSeconds / 60).toString().padStart(2, '0');
+          const secs = (isoSeconds % 60).toFixed(1).padStart(4, '0');
+          display.innerText = `${mins}:${secs}`;
+
+          // Audio Metronome tick matching BPM
+          if (Date.now() - lastTickTime >= tickIntervalMs) {
+            playSynthSound('tick');
+            lastTickTime = Date.now();
+          }
+        }, 100);
+      } else {
+        isoRunning = false;
+        clearInterval(isoInterval);
+        btn.innerText = 'RESUME TIMER';
+        btn.className = 'flex-1 py-3 px-4 rounded bg-hud-cyan hover:bg-cyan-400 text-obsidian font-orbitron font-bold text-sm transition shadow-glow-cyan';
+      }
+    }
+
+    function resetIsoTimer() {
+      isoRunning = false;
+      clearInterval(isoInterval);
+      isoSeconds = 0;
+      document.getElementById('isoHoldDisplay').innerText = '00:00.0';
+      const btn = document.getElementById('btnStartIso');
+      btn.innerText = 'START TIMER & TICK';
+      btn.className = 'flex-1 py-3 px-4 rounded bg-hud-cyan hover:bg-cyan-400 text-obsidian font-orbitron font-bold text-sm transition shadow-glow-cyan';
+    }
+
+    function saveIsoTelemetryEntry() {
+      if (isoSeconds < 1) {
+        showToast('Hold duration too short to log', 'amber');
+        return;
+      }
+
+      const angle = document.getElementById('telemetryJointAngle').value || 180;
+      const rpe = document.getElementById('telemetryRPE').value || 8;
+      const notes = document.getElementById('telemetryNotes').value || 'Solid hold form';
+
+      const xpEarned = Math.round(isoSeconds * 4); // 4 XP per second of hold
+      addXP(xpEarned, `Isometric Hold (${selectedSkill} - ${isoSeconds.toFixed(1)}s)`);
+
+      // Gain +1 STR if hold > 10s
+      if (isoSeconds >= 10) {
+        state.stats.STR += 1;
+        showToast(`High Isometric Volume! +1 STR Stat Earned`, 'cyan');
+      }
+
+      showToast(`Telemetry Logged: ${isoSeconds.toFixed(1)}s hold (+${xpEarned} XP)`, 'cyan');
+      resetIsoTimer();
+    }
+
+    function updateBpmSetting(val) {
+      state.settings.metronomeBpm = parseInt(val);
+      saveState();
+    }
+
+    function handleLogBoulderingSubmit(e) {
+      e.preventDefault();
+      const grade = document.getElementById('boulderGrade').value;
+      const angle = document.getElementById('boulderAngle').value;
+      const outcome = document.getElementById('boulderOutcome').value;
+      const notes = document.getElementById('boulderNotes').value || 'Clean execution';
+
+      const entry = {
+        id: 'b_' + Date.now(),
+        date: new Date().toLocaleDateString(),
+        grade: grade,
+        angle: angle,
+        outcome: outcome,
+        notes: notes
+      };
+
+      state.telemetry.boulderingLogs.unshift(entry);
+      
+      const xpGained = outcome.includes('Flash') ? 100 : outcome.includes('Sent') ? 70 : 30;
+      state.stats.AGI += 1; // Always boosts Agility
+      addXP(xpGained, `Bouldering Attempt: ${grade} (${outcome})`);
+      
+      showToast(`Logged ${grade} Climb! +${xpGained} XP & +1 AGI`, 'cyan');
+      closeModal('modalBouldering');
+      renderUI();
+    }
+
+    function renderBoulderingLogs() {
+      const table = document.getElementById('boulderingTableBody');
+      if (!table) return;
+
+      if (state.telemetry.boulderingLogs.length === 0) {
+        table.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-500">No bouldering attempts logged yet.</td></tr>`;
+        return;
+      }
+
+      table.innerHTML = state.telemetry.boulderingLogs.slice(0, 5).map(item => `
+        <tr class="hover:bg-slate-900/50">
+          <td class="py-2.5 px-3 text-slate-400">${item.date}</td>
+          <td class="py-2.5 px-3 font-bold text-hud-cyan">${item.grade}</td>
+          <td class="py-2.5 px-3 text-slate-300">${item.angle}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 text-[10px] rounded bg-hud-indigo text-hud-cyan border border-hud-cyan/30">${item.outcome}</span></td>
+          <td class="py-2.5 px-3 text-slate-400 italic">${item.notes}</td>
+          <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">+1 AGI</td>
+        </tr>
+      `).join('');
+    }
+
+    /* Embedded & Creative Projects Module */
+    function handleNewProjectSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('projName').value.trim();
+      const category = document.getElementById('projCategory').value;
+      const revision = document.getElementById('projRev').value.trim();
+      const desc = document.getElementById('projDesc').value.trim();
+
+      if (!name || !desc) return;
+
+      const newProj = {
+        id: 'p_' + Date.now(),
+        name: name,
+        category: category,
+        revision: revision,
+        status: 'In Progress',
+        desc: desc,
+        revisions: [
+          { rev: revision, notes: 'Project registered in Shadow System.', date: new Date().toLocaleDateString() }
+        ]
+      };
+
+      state.projects.unshift(newProj);
+      addXP(150, `Registered Build: ${name}`);
+      showToast('Project Registered! +150 XP', 'cyan');
+      closeModal('modalProject');
+      renderUI();
+    }
+
+    function shipProject(projId) {
+      const p = state.projects.find(item => item.id === projId);
+      if (p && p.status !== 'Shipped') {
+        p.status = 'Shipped';
+        state.stats.LGC += 3;
+        state.stats.INT += 2;
+        addXP(300, `Shipped Hardware Project: ${p.name}`);
+        showToast(`BUILD SHIPPED! +300 XP, +3 LGC, +2 INT`, 'cyan');
+        saveState();
+        renderUI();
+      }
+    }
+
+    function renderProjects() {
+      const grid = document.getElementById('projectsGrid');
+      if (!grid) return;
+
+      grid.innerHTML = state.projects.map(p => {
+        const isShipped = p.status === 'Shipped';
+        return `
+          <div class="hud-box p-5 rounded-lg flex flex-col justify-between ${isShipped ? 'border-emerald-500/40' : ''}">
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-hud-indigo text-hud-cyan border border-hud-cyan/30">
+                  ${p.category}
+                </span>
+                <span class="text-xs font-mono font-bold ${isShipped ? 'text-emerald-400' : 'text-amber-400'}">
+                  ${p.revision} [${p.status.toUpperCase()}]
+                </span>
+              </div>
+              <h4 class="font-orbitron font-bold text-white text-base mt-2">${p.name}</h4>
+              <p class="text-xs text-slate-400 font-mono mt-2 leading-relaxed">${p.desc}</p>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 space-y-3">
+              <div class="text-[11px] font-mono text-slate-500">
+                <strong class="text-slate-400">Latest Rev:</strong> ${p.revisions[p.revisions.length - 1]?.notes || 'Initial release'}
+              </div>
+
+              <div class="flex justify-between items-center">
+                ${!isShipped ? `
+                  <button onclick="shipProject('${p.id}')" class="w-full py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-orbitron text-xs font-bold transition">
+                    🚀 SHIP BUILD (+300 XP)
+                  </button>
+                ` : `
+                  <span class="text-xs font-mono text-emerald-400 font-bold">✓ SHIPPED TO PRODUCTION</span>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* System Ledger Logging */
+    function logLedger(type, desc, xp) {
+      state.ledger.unshift({
+        timestamp: new Date().toLocaleTimeString(),
+        type: type,
+        desc: desc,
+        xp: xp
+      });
+    }
+
+    function renderLedger() {
+      const table = document.getElementById('systemLedgerBody');
+      if (!table) return;
+
+      table.innerHTML = state.ledger.slice(0, 10).map(item => `
+        <tr class="hover:bg-slate-900/50">
+          <td class="py-2.5 px-3 text-slate-400">${item.timestamp}</td>
+          <td class="py-2.5 px-3"><span class="text-hud-cyan font-bold">${item.type}</span></td>
+          <td class="py-2.5 px-3 text-slate-200">${item.desc}</td>
+          <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">${item.xp > 0 ? '+' + item.xp + ' XP' : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Tab Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = 'tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700';
+      });
+
+      const targetView = document.getElementById(`view-${tabId}`);
+      if (targetView) targetView.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = 'tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-hud-cyan text-hud-cyan bg-hud-indigo/40 shadow-glow-cyan';
+      }
+
+      playSynthSound('click');
+      if (tabId === 'overview') {
+        setTimeout(drawRadarChart, 50);
+      }
+    }
+
+    // Modal Helpers
+    function openCustomQuestModal() { document.getElementById('modalCustomQuest').classList.remove('hidden'); }
+    function openBoulderingModal() { document.getElementById('modalBouldering').classList.remove('hidden'); }
+    function openNewProjectModal() { document.getElementById('modalProject').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function handleCreateCustomQuest(e) {
+      e.preventDefault();
+      const title = document.getElementById('custQuestTitle').value.trim();
+      const category = document.getElementById('custQuestCategory').value;
+      const xp = parseInt(document.getElementById('custQuestXP').value) || 100;
+
+      if (!title) return;
+
+      const newQ = {
+        id: 'q_' + Date.now(),
+        title: title.toUpperCase(),
+        category: category,
+        rewardXP: xp,
+        rewardStat: category,
+        completed: false
+      };
+
+      state.quests.push(newQ);
+      showToast('Custom Quest Initialized', 'cyan');
+      closeModal('modalCustomQuest');
+      saveState();
+      renderUI();
+    }
+
+    // Audio & FX Toggle
+    function toggleAudio() {
+      state.settings.soundEnabled = !state.settings.soundEnabled;
+      const btn = document.getElementById('btnToggleAudio');
+      btn.classList.toggle('text-hud-cyan', state.settings.soundEnabled);
+      showToast(state.settings.soundEnabled ? 'Audio Synth Enabled' : 'Audio Synth Muted', 'cyan');
+      saveState();
+    }
+
+    function toggleScanlines() {
+      state.settings.scanlines = !state.settings.scanlines;
+      const overlay = document.getElementById('scanlineOverlay');
+      overlay.style.display = state.settings.scanlines ? 'block' : 'none';
+      saveState();
+    }
+
+    function applyManualDriftReduce() {
+      state.drift.ratePercent = Math.max(0, state.drift.ratePercent - 10.0);
+      showToast('System Drift Flushed (-10%)', 'cyan');
+      playSynthSound('reward');
+      saveState();
+      renderUI();
+    }
+
+    // Floating XP Popup
+    function showXpPopup(text) {
+      const popup = document.createElement('div');
+      popup.className = 'xp-popup';
+      popup.innerText = text;
+      popup.style.left = `${window.innerWidth / 2 - 40}px`;
+      popup.style.top = `${window.innerHeight / 2 - 50}px`;
+      document.body.appendChild(popup);
+      setTimeout(() => popup.remove(), 1200);
+    }
+
+    // HUD Toast Notification
+    function showToast(msg, color = 'cyan') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `p-3 rounded font-mono text-xs text-white bg-slate-900 border ${color === 'amber' ? 'border-amber-400' : 'border-hud-cyan'} shadow-glow-cyan flex items-center justify-between transition-all duration-300 transform translate-y-2`;
+      toast.innerHTML = `
+        <span class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full ${color === 'amber' ? 'bg-amber-400' : 'bg-hud-cyan'} animate-ping"></span>
+          ${msg}
+        </span>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          state = { ...state, ...parsed };
+        } catch (e) {
+          console.error("Failed to parse saved state", e);
+        }
+      }
+    }
+
+    function exportSystemData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `SHADOW_SYSTEM_BACKUP_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('System State JSON Exported', 'cyan');
+    }
+
+    function importSystemData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.stats && imported.player) {
+            state = imported;
+            saveState();
+            renderUI();
+            showToast('System Backup Restored Successfully!', 'cyan');
+          } else {
+            showToast('Invalid JSON Backup Format', 'amber');
+          }
+        } catch (err) {
+          showToast('Failed to parse JSON file', 'amber');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmHardReset() {
+      if (window.confirm("PERMANENT WARNING: Hard reset will erase all stat levels, quest history, and project logs. Proceed?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    // Passive Stagnation Decay Loop
+    setInterval(() => {
+      // Accumulate drift slowly over time (0.05% every 10 seconds)
+      state.drift.ratePercent = Math.min(100, state.drift.ratePercent + 0.05);
+      renderUI();
+    }, 10000);
+
+    // Midnight Reset Countdown Timer
+    setInterval(() => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const diffMs = midnight - now;
+
+      const hrs = Math.floor(diffMs / (1000 * 60 * 60)).toString().padStart(2, '0');
+      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+      const secs = Math.floor((diffMs % (1000 * 60)) / 1000).toString().padStart(2, '0');
+
+      const timerEl = document.getElementById('questResetTimer');
+      if (timerEl) timerEl.innerText = `${hrs}:${mins}:${secs}`;
+    }, 1000);
+
+    // Window Load Initialization
+    window.onload = function () {
+      loadState();
+      renderUI();
+      console.log("SYSTEM // SHADOW ARCHITECT ENGINE INITIALIZED ONLINE.");
+    };
+  </script>
+</body>
+</html>
