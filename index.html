@@ -1600,24 +1600,36 @@
       `).join('');
     }
 
-    // Tab Switcher
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.className = 'tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700';
+    // Tab Navigation Listener with Automatic View Refresh
+    function switchTab(targetTabId) {
+      // Hide all view panels
+      document.querySelectorAll('.view-panel').forEach(panel => {
+        panel.classList.add('hidden');
+        panel.style.display = 'none';
       });
 
-      const targetView = document.getElementById(`view-${tabId}`);
-      if (targetView) targetView.classList.remove('hidden');
-
-      const activeBtn = document.getElementById(`tab-${tabId}`);
-      if (activeBtn) {
-        activeBtn.className = 'tab-btn px-4 py-2 rounded font-orbitron text-sm font-semibold tracking-wider whitespace-nowrap transition border border-hud-cyan text-hud-cyan bg-hud-indigo/40 shadow-glow-cyan';
+      // Show the target panel
+      const activePanel = document.getElementById(targetTabId);
+      if (activePanel) {
+        activePanel.classList.remove('hidden');
+        activePanel.style.display = 'block';
       }
 
-      playSynthSound('click');
-      if (tabId === 'overview') {
-        setTimeout(drawRadarChart, 50);
+      // Update active styling on navigation buttons
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-cyan-400');
+        btn.classList.add('text-zinc-500');
+      });
+
+      const activeBtn = document.querySelector(`[data-tab="${targetTabId}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'text-cyan-400');
+        activeBtn.classList.remove('text-zinc-500');
+      }
+
+      // CRITICAL FIX: Re-render Home view and Radar Chart whenever switching to Home
+      if (targetTabId === 'home-view' || targetTabId === 'hud-view' || targetTabId === 'system') {
+        renderHUD();
       }
     }
 
