@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  Clock, Zap, Volume2, Smartphone
+  ChevronLeft, Clock, Zap, Smartphone
 } from 'lucide-react';
 
 /* ============================================================================
@@ -66,11 +66,10 @@ export default function App() {
 
   // --- State Initialization ---
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [simulatedDate, setSimulatedDate] = useState(todayStr);
   
   // Pillars State
   const [pillars, setPillars] = useState(() => {
-    const saved = localStorage.getItem('system_pillars_v3');
+    const saved = localStorage.getItem('shadow_pillars_v1');
     if (saved) return JSON.parse(saved);
     return {
       workout: { streak: 0, consecutiveMisses: 0, status: 'ACTIVE', lastCompleted: null, completedToday: false },
@@ -83,7 +82,7 @@ export default function App() {
 
   // Last active date check for auto-reset / rollover
   const [lastSavedDate, setLastSavedDate] = useState(() => {
-    return localStorage.getItem('system_last_date_v3') || todayStr;
+    return localStorage.getItem('shadow_last_date_v1') || todayStr;
   });
 
   // Countdown to midnight
@@ -92,34 +91,58 @@ export default function App() {
   // Wake Lock Ref
   const wakeLockRef = useRef(null);
 
-  // Markdown Content State
-  const [markdownData, setMarkdownData] = useState({
-    calisthenics: '',
-    math: '',
-    mobility: '',
-    loading: true,
-    error: null
-  });
-
-  // Calisthenics Hub State
+  // Calisthenics Tracks & Progression Ladder State
   const [caliTracks, setCaliTracks] = useState(() => {
-    const saved = localStorage.getItem('system_cali_tracks_v3');
+    const saved = localStorage.getItem('shadow_cali_tracks_v1');
     if (saved) return JSON.parse(saved);
     return {
-      planche: { name: 'Planche Progression', currentTrack: 'Tuck Planche Hold', pr: '10s @ RPE 8.5', history: [] },
-      frontLever: { name: 'Front Lever Progression', currentTrack: 'Advanced Tuck Hold', pr: '12s @ RPE 9.0', history: [] },
-      oneArmPullup: { name: 'One-Arm Pull-Up', currentTrack: 'Assisted 1APU (Band)', pr: '2 reps @ RPE 8.5', history: [] },
-      hspu: { name: 'Handstand Push-Up', currentTrack: 'Wall-Supported HSPU', pr: '5 reps @ RPE 9.0', history: [] }
+      planche: {
+        name: 'Planche Progression',
+        ladder: ['Frog Stand', 'Tuck Planche', 'Advanced Tuck Planche', 'Straddle Planche', 'Full Planche'],
+        currentIndex: 1,
+        pr: '10s @ RPE 8.5',
+        history: []
+      },
+      frontLever: {
+        name: 'Front Lever Progression',
+        ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'],
+        currentIndex: 1,
+        pr: '12s @ RPE 9.0',
+        history: []
+      },
+      oneArmPullup: {
+        name: 'One-Arm Pull-Up',
+        ladder: ['Archer Pull-Ups', 'Assisted 1APU (Band)', 'Eccentric 1APU Lockoffs', 'Full One-Arm Pull-Up'],
+        currentIndex: 1,
+        pr: '2 reps @ RPE 8.5',
+        history: []
+      },
+      hspu: {
+        name: 'Handstand Push-Up',
+        ladder: ['Pike Push-Ups', 'Wall-Supported HSPU', 'Deficit Wall HSPU', 'Freestanding HSPU'],
+        currentIndex: 1,
+        pr: '5 reps @ RPE 9.0',
+        history: []
+      }
     };
   });
+
+  // Calisthenics Form Inputs State
+  const [caliInputs, setCaliInputs] = useState({
+    planche: { performance: '', rpe: '8.5' },
+    frontLever: { performance: '', rpe: '8.5' },
+    oneArmPullup: { performance: '', rpe: '8.5' },
+    hspu: { performance: '', rpe: '8.5' }
+  });
+
+  // Timers State
+  const [caliTimer, setCaliTimer] = useState({ active: false, secondsLeft: 30, total: 30 });
+  const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60 });
 
   // Math Solved State
   const [solvedMath, setSolvedMath] = useState({});
 
-  // Mobility Timer State
-  const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60, currentStretch: 'Thoracic Extension' });
-
-  // --- Auto Date Rollover & Midnight Countdown Effect ---
+  // --- Auto Date Rollover Effect ---
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
@@ -133,15 +156,12 @@ export default function App() {
         setTimeLeftToday({ hours, minutes, seconds });
       }
 
-      // Check if day changed in local timezone
       const currentLocalDate = getLocalDateString(now);
       if (currentLocalDate !== lastSavedDate) {
-        // Auto-reset daily completed flags for a new day
         setPillars(prev => {
           const updated = {};
           Object.keys(prev).forEach(key => {
             const p = prev[key];
-            // Evaluate consecutive misses if yesterday was missed
             let misses = p.consecutiveMisses;
             if (!p.completedToday && p.lastCompleted !== lastSavedDate) {
               misses += 1;
@@ -165,7 +185,7 @@ export default function App() {
           return updated;
         });
         setLastSavedDate(currentLocalDate);
-        localStorage.setItem('system_last_date_v3', currentLocalDate);
+        localStorage.setItem('shadow_last_date_v1', currentLocalDate);
       }
     };
 
@@ -176,10 +196,9 @@ export default function App() {
 
   // --- Save Persistence & App Badging ---
   useEffect(() => {
-    localStorage.setItem('system_pillars_v3', JSON.stringify(pillars));
-    localStorage.setItem('system_cali_tracks_v3', JSON.stringify(caliTracks));
+    localStorage.setItem('shadow_pillars_v1', JSON.stringify(pillars));
+    localStorage.setItem('shadow_cali_tracks_v1', JSON.stringify(caliTracks));
 
-    // Calculate pending quests for App Badge API
     const pendingCount = Object.values(pillars).filter(p => !p.completedToday).length;
     if ('setAppBadge' in navigator) {
       if (pendingCount > 0) {
@@ -189,34 +208,6 @@ export default function App() {
       }
     }
   }, [pillars, caliTracks]);
-
-  // --- Fetch Markdown Lookup Tables ---
-  useEffect(() => {
-    async function loadMarkdownFiles() {
-      try {
-        const [resCali, resMath, resMob] = await Promise.all([
-          fetch('./progressions/calisthenics_progressions.md').catch(() => ({ text: () => '# Calisthenics Progressions\n- Tuck Planche (10s target)\n- Advanced Tuck (8s target)' })),
-          fetch('./math/paper_problem_sets.md').catch(() => ({ text: () => '# Math Problem Sets\n1. Linear Algebra Eigenvalues\n2. Z-Transform Stability' })),
-          fetch('./stretches/daily_mobility.md').catch(() => ({ text: () => '# Daily Mobility\n- Thoracic Spine Extension (60s)\n- Couch Stretch (90s)' }))
-        ]);
-
-        const caliText = await resCali.text();
-        const mathText = await resMath.text();
-        const mobText = await resMob.text();
-
-        setMarkdownData({
-          calisthenics: caliText,
-          math: mathText,
-          mobility: mobText,
-          loading: false,
-          error: null
-        });
-      } catch (err) {
-        setMarkdownData(prev => ({ ...prev, loading: false, error: err.message }));
-      }
-    }
-    loadMarkdownFiles();
-  }, []);
 
   // --- Screen Wake Lock Management ---
   const toggleWakeLock = async (enable) => {
@@ -234,7 +225,7 @@ export default function App() {
     }
   };
 
-  // --- Toggle Pillar Completion (Zero-Effort Quick Check) ---
+  // --- Toggle Pillar Completion ---
   const togglePillar = (key) => {
     systemAudio.playSound('complete');
     setPillars(prev => {
@@ -266,6 +257,22 @@ export default function App() {
     });
   };
 
+  // --- Calisthenics Hold Timer Effect ---
+  useEffect(() => {
+    let interval = null;
+    if (caliTimer.active && caliTimer.secondsLeft > 0) {
+      toggleWakeLock(true);
+      interval = setInterval(() => {
+        setCaliTimer(prev => ({ ...prev, secondsLeft: prev.secondsLeft - 1 }));
+      }, 1000);
+    } else if (caliTimer.secondsLeft === 0 && caliTimer.active) {
+      systemAudio.playSound('complete');
+      setCaliTimer(prev => ({ ...prev, active: false }));
+      toggleWakeLock(false);
+    }
+    return () => clearInterval(interval);
+  }, [caliTimer.active, caliTimer.secondsLeft]);
+
   // --- Mobility Timer Effect ---
   useEffect(() => {
     let interval = null;
@@ -279,32 +286,26 @@ export default function App() {
       setMobilityTimer(prev => ({ ...prev, active: false }));
       toggleWakeLock(false);
     }
-    return () => {
-      clearInterval(interval);
-      if (!mobilityTimer.active) toggleWakeLock(false);
-    };
+    return () => clearInterval(interval);
   }, [mobilityTimer.active, mobilityTimer.secondsLeft]);
 
-  // Total pending quests count
   const pendingCount = Object.values(pillars).filter(p => !p.completedToday).length;
 
   return (
     <div className="min-h-screen bg-[#09090B] text-slate-100 flex flex-col font-sans select-none">
       
       {/* ================================================================== */}
-      {/* TOP HUD HEADER & RED END-OF-DAY COUNTDOWN BAR                      */}
+      {/* HEADER: BRANDING "SHADOW" & RED COUNTDOWN                          */}
       {/* ================================================================== */}
       <header className="border-b border-slate-800 bg-[#09090B]/90 backdrop-blur sticky top-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
 
-          {/* Logo & Status */}
           <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-[#00E5FF] rounded-full animate-pulse glow-cyan" />
-              <h1 className="font-mono font-bold tracking-wider text-lg text-white">THE SYSTEM <span className="text-[#00E5FF] text-xs px-2 py-0.5 bg-[#00E5FF]/10 rounded border border-[#00E5FF]/30">v3.5 HUD</span></h1>
+              <h1 className="font-mono font-bold tracking-widest text-xl text-white">SHADOW</h1>
             </div>
 
-            {/* Badge Indicator for iOS PWA */}
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-md text-xs font-mono">
               <Smartphone className="w-3.5 h-3.5 text-[#00E5FF]" />
               <span className="text-slate-400">Badge:</span>
@@ -314,7 +315,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Red Countdown Timer (Remaining Time Today) */}
           <div className="flex items-center gap-2 px-3 py-1 bg-red-950/30 border border-red-500/30 rounded-md font-mono text-xs">
             <Clock className="w-4 h-4 text-[#FF2A5F] animate-pulse" />
             <span className="text-slate-400">RESET IN:</span>
@@ -325,7 +325,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* Navigation Tabs */}
           <nav className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: Activity },
@@ -356,7 +355,7 @@ export default function App() {
       </header>
 
       {/* ================================================================== */}
-      {/* ZERO-EFFORT TOP-LEVEL QUICK CHECK BAR (STICKY)                     */}
+      {/* QUICK CHECK BAR                                                    */}
       {/* ================================================================== */}
       <div className="bg-slate-950/80 border-b border-slate-800 px-4 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto gap-4">
@@ -387,45 +386,18 @@ export default function App() {
       </div>
 
       {/* ================================================================== */}
-      {/* MAIN CONTENT VIEW CONTAINER                                        */}
+      {/* MAIN CONTENT AREA                                                 */}
       {/* ================================================================== */}
       <main className="max-w-7xl w-full mx-auto p-4 md:p-6 flex-1">
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 1: DASHBOARD                                                 */}
-        {/* ---------------------------------------------------------------- */}
+        {/* DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-              <div>
-                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">EXECUTION DASHBOARD</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">Local Date: {simulatedDate} | 3-Day Decay Grace Model Active</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSimulatedDate(d => {
-                    const next = new Date(d);
-                    next.setDate(next.getDate() + 1);
-                    return getLocalDateString(next);
-                  })}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-xs text-slate-300 transition"
-                >
-                  +1 Day Sim
-                </button>
-                <button
-                  onClick={() => setSimulatedDate(d => {
-                    const next = new Date(d);
-                    next.setDate(next.getDate() + 3);
-                    return getLocalDateString(next);
-                  })}
-                  className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/40 border border-red-900/50 rounded font-mono text-xs text-red-400 transition"
-                >
-                  +3 Days (Trigger Decay)
-                </button>
-              </div>
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">EXECUTION DASHBOARD</h2>
+              <p className="text-xs text-slate-400 font-mono mt-1">Local Date: {todayStr} | 3-Day Decay Grace Model Active</p>
             </div>
 
-            {/* Pillar Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(pillars).map(([key, data]) => {
                 const titleMap = {
@@ -491,96 +463,169 @@ export default function App() {
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 2: CALISTHENICS HUB (PARALLEL TRACKS & PRS)                  */}
-        {/* ---------------------------------------------------------------- */}
+        {/* CALISTHENICS HUB */}
         {activeTab === 'calisthenics' && (
           <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">CALISTHENICS HUB & AUTO-REGULATED EDGE COACHING</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Targeting RPE 8.5–9.0 edge capacity across parallel isometric & dynamic tracks.</p>
+            <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">CALISTHENICS HUB</h2>
+                <p className="text-xs text-slate-400 font-mono mt-1">Autoregulated RPE 8.5–9.0 edge coaching with interactive skill progression ladders.</p>
+              </div>
+
+              {/* Calisthenics Active Hold Timer */}
+              <div className="p-3.5 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-4">
+                <div>
+                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">Hold Timer</span>
+                  <div className="text-3xl font-mono font-bold text-white tracking-wider">
+                    {String(Math.floor(caliTimer.secondsLeft / 60)).padStart(2, '0')}:
+                    {String(caliTimer.secondsLeft % 60).padStart(2, '0')}
+                  </div>
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setCaliTimer(prev => ({ ...prev, active: !prev.active }))}
+                    className={`px-3 py-1.5 rounded font-mono text-xs font-bold transition ${
+                      caliTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
+                    }`}
+                  >
+                    {caliTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={() => setCaliTimer({ active: false, secondsLeft: 30, total: 30 })}
+                    className="px-2.5 py-1.5 bg-slate-800 text-slate-300 rounded font-mono text-xs"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
 
+            {/* Skill Tracks */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(caliTracks).map(([skillKey, trackData]) => (
-                <div key={skillKey} className="p-5 rounded-lg border border-slate-800 bg-slate-900/60 flex flex-col justify-between gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-mono font-bold text-base text-white flex items-center gap-2">
-                        <Dumbbell className="w-4 h-4 text-[#00E5FF]" />
-                        {trackData.name}
-                      </h3>
-                      <span className="px-2.5 py-0.5 rounded bg-cyan-950/40 border border-[#00E5FF]/30 text-[#00E5FF] text-xs font-mono">
-                        PR: {trackData.pr}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 font-mono">Current Track: <span className="text-white font-bold">{trackData.currentTrack}</span></p>
-                  </div>
+              {Object.entries(caliTracks).map(([skillKey, trackData]) => {
+                const currentStep = trackData.ladder[trackData.currentIndex];
+                return (
+                  <div key={skillKey} className="p-5 rounded-lg border border-slate-800 bg-slate-900/60 flex flex-col justify-between gap-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-mono font-bold text-base text-white flex items-center gap-2">
+                          <Dumbbell className="w-4 h-4 text-[#00E5FF]" />
+                          {trackData.name}
+                        </h3>
+                        <span className="px-2.5 py-0.5 rounded bg-cyan-950/40 border border-[#00E5FF]/30 text-[#00E5FF] text-xs font-mono">
+                          PR: {trackData.pr}
+                        </span>
+                      </div>
 
-                  <div className="space-y-3 pt-3 border-t border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        placeholder="Log attempt (e.g., 14s @ RPE 8.5)"
-                        id={`input-${skillKey}`}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
-                      />
+                      {/* Interactive Progression Ladder Viewer */}
+                      <div className="mt-3 p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+                          <span>Active Level:</span>
+                          <span className="text-[#00E5FF] font-bold">{currentStep}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+                          <button
+                            disabled={trackData.currentIndex === 0}
+                            onClick={() => {
+                              setCaliTracks(prev => ({
+                                ...prev,
+                                [skillKey]: { ...prev[skillKey], currentIndex: Math.max(0, prev[skillKey].currentIndex - 1) }
+                              }));
+                            }}
+                            className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-[10px] font-mono"
+                          >
+                            <ChevronLeft className="w-3 h-3" /> Prev Step
+                          </button>
+                          <span className="text-[10px] font-mono text-slate-500">
+                            {trackData.currentIndex + 1} / {trackData.ladder.length}
+                          </span>
+                          <button
+                            disabled={trackData.currentIndex === trackData.ladder.length - 1}
+                            onClick={() => {
+                              setCaliTracks(prev => ({
+                                ...prev,
+                                [skillKey]: { ...prev[skillKey], currentIndex: Math.min(prev[skillKey].ladder.length - 1, prev[skillKey].currentIndex + 1) }
+                              }));
+                            }}
+                            className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-[10px] font-mono"
+                          >
+                            Next Step <ChevronRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dual Input Form (Reps/Time + RPE) */}
+                    <div className="space-y-3 pt-3 border-t border-slate-800">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-1">Reps / Hold Time</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 12s or 5 reps"
+                            value={caliInputs[skillKey]?.performance || ''}
+                            onChange={(e) => setCaliInputs(prev => ({ ...prev, [skillKey]: { ...prev[skillKey], performance: e.target.value } }))}
+                            className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-1">Logged RPE</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 8.5"
+                            value={caliInputs[skillKey]?.rpe || ''}
+                            onChange={(e) => setCaliInputs(prev => ({ ...prev, [skillKey]: { ...prev[skillKey], rpe: e.target.value } }))}
+                            className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                          />
+                        </div>
+                      </div>
+
                       <button
                         onClick={() => {
-                          const val = document.getElementById(`input-${skillKey}`).value;
-                          if (!val) return;
+                          const perf = caliInputs[skillKey]?.performance;
+                          const rpe = caliInputs[skillKey]?.rpe;
+                          if (!perf) return;
                           systemAudio.playSound('complete');
+                          const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
                           setCaliTracks(prev => ({
                             ...prev,
                             [skillKey]: {
                               ...prev[skillKey],
-                              pr: val,
-                              history: [val, ...prev[skillKey].history]
+                              pr: `${perf} @ RPE ${rpe || '8.5'}`,
+                              history: [logStr, ...prev[skillKey].history]
                             }
                           }));
-                          document.getElementById(`input-$ {skillKey}`).value = '';
+                          setCaliInputs(prev => ({ ...prev, [skillKey]: { performance: '', rpe: '8.5' } }));
                         }}
-                        className="px-4 py-1.5 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
+                        className="w-full py-1.5 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
                       >
-                        Log PR
+                        Log Set & Update PR
                       </button>
+
+                      {trackData.history.length > 0 && (
+                        <div className="text-[11px] font-mono text-slate-400 space-y-1 pt-1">
+                          <span className="text-slate-500 uppercase tracking-wider block">Recent History:</span>
+                          {trackData.history.slice(0, 2).map((h, i) => (
+                            <div key={i} className="flex items-center gap-1 text-slate-300">
+                              <ChevronRight className="w-3 h-3 text-[#00E5FF]" /> {h}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-
-                    {trackData.history.length > 0 && (
-                      <div className="text-[11px] font-mono text-slate-400 space-y-1">
-                        <span className="text-slate-500 uppercase tracking-wider block">Recent Logs:</span>
-                        {trackData.history.slice(0, 3).map((h, i) => (
-                          <div key={i} className="flex items-center gap-1.5 text-slate-300">
-                            <ChevronRight className="w-3 h-3 text-[#00E5FF]" /> {h}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Markdown Viewer for Progressions */}
-            <div className="p-5 rounded-lg border border-slate-800 bg-slate-900/40">
-              <h3 className="font-mono font-bold text-sm text-[#00E5FF] mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Loaded Progression Markdown Lookup Table
-              </h3>
-              <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap bg-slate-950 p-4 rounded border border-slate-800 max-h-60 overflow-y-auto">
-                {markdownData.loading ? 'Fetching static Markdown...' : markdownData.calisthenics}
-              </pre>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 3: MATH & LOGIC (PENCIL & PAPER SOLVABLE)                     */}
-        {/* ---------------------------------------------------------------- */}
+        {/* MATH & LOGIC */}
         {activeTab === 'math' && (
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">PENCIL & PAPER MATH & ENGINEERING PROBLEMS</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Rigorous analytical problem sets with step-by-step written derivations and solutions.</p>
+              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">PENCIL & PAPER MATH PROBLEMS</h2>
+              <p className="text-xs text-slate-400 font-mono mt-1">Rigorous analytical problems formatted for paper derivations.</p>
             </div>
 
             <div className="space-y-4">
@@ -589,33 +634,31 @@ export default function App() {
                   id: 1,
                   title: 'Linear Algebra: Eigenvalues & Characteristic Matrix',
                   domain: 'Linear Algebra / Control Systems',
-                  problem: 'Given the system matrix $A = \\begin{pmatrix} 2 & 1 \\\\ 0 & 3 \\end{pmatrix}$, compute the characteristic polynomial $\\det(A - \\lambda I) = 0$, find the eigenvalues $\\lambda_1, \\lambda_2$, and determine the corresponding eigenvectors.',
-                  solution: `1. Set up characteristic equation: det(A - λI) = det([2-λ, 1; 0, 3-λ]) = 0.
-2. Expand determinant: (2 - λ)(3 - λ) - (1)(0) = 0 => λ² - 5λ + 6 = 0.
-3. Factor polynomial: (λ - 2)(λ - 3) = 0 => Eigenvalues: λ₁ = 2, λ₂ = 3.
-4. For λ₁ = 2: [0 1; 0 1][v1; v2] = 0 => v₂ = 0 => Eigenvector v₁ = [1, 0]^T.
-5. For λ₂ = 3: [-1 1; 0 0][v1; v2] = 0 => -v₁ + v₂ = 0 => Eigenvector v₂ = [1, 1]^T.`
+                  problem: 'Given matrix A = [[2, 1], [0, 3]], compute the characteristic polynomial det(A - λI) = 0, find eigenvalues λ1, λ2, and derive eigenvectors.',
+                  solution: `1. Characteristic Equation: det(A - λI) = det([[2-λ, 1], [0, 3-λ]]) = 0.
+2. Polynomial: (2 - λ)(3 - λ) - (0)(1) = 0 => λ² - 5λ + 6 = 0.
+3. Factored: (λ - 2)(λ - 3) = 0 => λ1 = 2, λ2 = 3.
+4. Eigenvector for λ1 = 2: [[0, 1], [0, 1]][v1, v2]^T = 0 => v2 = 0 => v1 = [1, 0]^T.
+5. Eigenvector for λ2 = 3: [[-1, 1], [0, 0]][v1, v2]^T = 0 => -v1 + v2 = 0 => v2 = [1, 1]^T.`
                 },
                 {
                   id: 2,
                   title: 'Z-Transform: Pole Stability Analysis',
                   domain: 'Digital Signal Processing',
-                  problem: 'Determine the stability of the discrete-time transfer function $H(z) = \\frac{1}{1 - 1.5z^{-1} + 0.5z^{-2}}$ by finding its poles and checking unit circle confinement.',
-                  solution: `1. Rewrite in positive powers of z: H(z) = z² / (z² - 1.5z + 0.5).
-2. Find roots of denominator: z² - 1.5z + 0.5 = 0.
-3. Apply quadratic formula: z = (1.5 ± √(2.25 - 2)) / 2 = (1.5 ± 0.5) / 2.
-4. Poles are at z₁ = 1.0 and z₂ = 0.5.
-5. Conclusion: Since pole z₁ = 1.0 lies on the unit circle boundary, the system is marginally stable (BIBO unstable for unbounded inputs).`
+                  problem: 'Determine the stability of transfer function H(z) = 1 / (1 - 1.5z^-1 + 0.5z^-2) by finding poles.',
+                  solution: `1. In positive powers: H(z) = z² / (z² - 1.5z + 0.5).
+2. Denominator roots: z² - 1.5z + 0.5 = 0.
+3. Factor: (z - 1.0)(z - 0.5) = 0 => Poles at z1 = 1.0, z2 = 0.5.
+4. Conclusion: Pole z1 = 1.0 lies on the unit circle boundary (marginally stable).`
                 },
                 {
                   id: 3,
-                  title: 'Information Theory: Huffman Entropy & Source Coding',
+                  title: 'Information Theory: Shannon Entropy',
                   domain: 'Information Theory',
-                  problem: 'A discrete memoryless source emits symbols {A, B, C, D} with probabilities P = {0.5, 0.25, 0.125, 0.125}. Calculate the Shannon entropy H(X) in bits per symbol.',
-                  solution: `1. Formula: H(X) = - Σ p(x) log₂ p(x).
-2. H(X) = - [0.5 log₂(0.5) + 0.25 log₂(0.25) + 0.125 log₂(0.125) + 0.125 log₂(0.125)]
-3. H(X) = - [0.5(-1) + 0.25(-2) + 0.125(-3) + 0.125(-3)]
-4. H(X) = - [-0.5 - 0.5 - 0.375 - 0.375] = 1.75 bits/symbol.`
+                  problem: 'A source emits symbols {A, B, C, D} with P = {0.5, 0.25, 0.125, 0.125}. Calculate entropy H(X) in bits.',
+                  solution: `1. Formula: H(X) = - Σ p(x) log2 p(x).
+2. H(X) = - [0.5 log2(0.5) + 0.25 log2(0.25) + 0.125 log2(0.125) + 0.125 log2(0.125)]
+3. H(X) = - [0.5(-1) + 0.25(-2) + 0.125(-3) + 0.125(-3)] = 1.75 bits/symbol.`
                 }
               ].map(item => (
                 <div key={item.id} className="p-5 rounded-lg border border-slate-800 bg-slate-900/50 space-y-3">
@@ -636,12 +679,12 @@ export default function App() {
                       className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded font-mono text-xs transition flex items-center gap-2"
                     >
                       <FileText className="w-3.5 h-3.5 text-[#00E5FF]" />
-                      {solvedMath[item.id] ? 'Hide Pencil & Paper Derivation' : 'View Pencil & Paper Derivation'}
+                      {solvedMath[item.id] ? 'Hide Solution' : 'View Written Derivation'}
                     </button>
 
                     {solvedMath[item.id] && (
                       <div className="mt-3 p-4 bg-slate-950 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 whitespace-pre-wrap">
-                        <span className="text-emerald-400 font-bold block mb-1">=== STEP-BY-STEP SOLUTION & BOXED ANSWER ===</span>
+                        <span className="text-emerald-400 font-bold block mb-1">=== DERIVATION & BOXED ANSWER ===</span>
                         {item.solution}
                       </div>
                     )}
@@ -652,18 +695,15 @@ export default function App() {
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 4: MOBILITY ROUTINE (LARGER TIMERS & BIO-MECHANICS)           */}
-        {/* ---------------------------------------------------------------- */}
+        {/* MOBILITY ROUTINE */}
         {activeTab === 'mobility' && (
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY FULL-BODY MOBILITY & STRETCHING</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">Biomechanical joint preparation with active oversized timers.</p>
+                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MOBILITY ROUTINE</h2>
+                <p className="text-xs text-slate-400 font-mono mt-1">Biomechanical joint preparation with active hold timers.</p>
               </div>
 
-              {/* Active Oversized Timer HUD */}
               <div className="p-4 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-6">
                 <div>
                   <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">Active Hold Timer</span>
@@ -676,15 +716,15 @@ export default function App() {
                   <button
                     onClick={() => setMobilityTimer(prev => ({ ...prev, active: !prev.active }))}
                     className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
-                      mobilityTimer.active ? 'bg-amber-500 text-black hover:bg-amber-400' : 'bg-[#00E5FF] text-black hover:bg-[#00E5FF]/85'
+                      mobilityTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
                     }`}
                   >
                     {mobilityTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     {mobilityTimer.active ? 'PAUSE' : 'START HOLD'}
                   </button>
                   <button
-                    onClick={() => setMobilityTimer(prev => ({ ...prev, secondsLeft: 60, active: false }))}
-                    className="px-4 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs transition flex items-center justify-center gap-1"
+                    onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60 })}
+                    className="px-4 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
                   >
                     <RotateCcw className="w-3 h-3" /> Reset 60s
                   </button>
@@ -692,13 +732,12 @@ export default function App() {
               </div>
             </div>
 
-            {/* Stretch Routine List */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 { name: 'Thoracic Spine Extension', duration: '90s', focus: 'Upper back extension over foam roller/block', cues: 'Posterior pelvic tilt, exhale deeply into upper back.' },
                 { name: 'Couch Stretch (Hip Flexors)', duration: '120s / leg', focus: 'Hip flexors, rectus femoris, psoas', cues: 'Squeeze glute hard on stretched leg, keep ribs locked down.' },
-                { name: 'Jefferson Curls', duration: '60s (5 reps slow)', focus: 'Spinal articulation & hamstring length', cues: 'Chin to chest first, segmentally roll down vertebrae by vertebrae with light load.' },
-                { name: 'Shoulder Butcher Block', duration: '90s', focus: 'Lat & overhead shoulder mobility', cues: 'Hands elevated on bench, drop chest toward floor while bracing core.' },
+                { name: 'Jefferson Curls', duration: '60s (5 reps slow)', focus: 'Spinal articulation & hamstring length', cues: 'Chin to chest first, segmentally roll down vertebrae by vertebrae.' },
+                { name: 'Shoulder Butcher Block', duration: '90s', focus: 'Lat & overhead shoulder mobility', cues: 'Hands elevated on bench, drop chest toward floor.' },
                 { name: 'Wrist Flexor & Extensor Prep', duration: '60s', focus: 'Wrist joint conditioning for planche/handstand', cues: 'Palms forward/out, lean gently over wrists with locked elbows.' }
               ].map((stretch, i) => (
                 <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
@@ -714,7 +753,7 @@ export default function App() {
                   </div>
                   <button
                     onClick={() => {
-                      setMobilityTimer({ active: true, secondsLeft: stretch.duration.includes('120') ? 120 : 90, total: 90, currentStretch: stretch.name });
+                      setMobilityTimer({ active: true, secondsLeft: stretch.duration.includes('120') ? 120 : 90, total: 90 });
                     }}
                     className="w-full py-2 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-slate-200 rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2"
                   >
@@ -726,35 +765,26 @@ export default function App() {
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 5: GIT SYNC & ARCHITECTURE                                   */}
-        {/* ---------------------------------------------------------------- */}
+        {/* GIT SYNC ENGINE */}
         {activeTab === 'architecture' && (
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GIT REPOSITORY & MARKDOWN SYNC ENGINE</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Architecture details for static runtime fetching on GitHub Pages.</p>
+              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GIT REPOSITORY & ENGINE</h2>
+              <p className="text-xs text-slate-400 font-mono mt-1">Architecture details for static runtime execution on GitHub Pages.</p>
             </div>
 
             <div className="p-5 rounded-lg border border-slate-800 bg-slate-900/50 space-y-4 font-mono text-xs text-slate-300">
               <p>
-                The web application executes entirely client-side on GitHub Pages. Complex domain knowledge files (`calisthenics_progressions.md`, `paper_problem_sets.md`, `daily_mobility.md`) are stored in the public directory and fetched asynchronously at runtime.
+                The web application executes entirely client-side on GitHub Pages. Complex domain knowledge files are processed seamlessly in memory without exposing raw Markdown tables.
               </p>
-              <div className="bg-slate-950 p-4 rounded border border-slate-800 space-y-2">
-                <div className="text-[#00E5FF] font-bold">Fetch Architecture Mapping:</div>
-                <div>- Progressions: <span className="text-white">./progressions/calisthenics_progressions.md</span></div>
-                <div>- Math Problems: <span className="text-white">./math/paper_problem_sets.md</span></div>
-                <div>- Mobility Routine: <span className="text-white">./stretches/daily_mobility.md</span></div>
-              </div>
             </div>
           </div>
         )}
 
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-slate-800 py-4 px-6 text-center text-xs font-mono text-slate-500">
-        THE SYSTEM // EMBEDDED ATHLETE HUD • RUNNING ON GITHUB PAGES STATIC SPA
+        SHADOW // EMBEDDED ATHLETE HUD • GITHUB PAGES
       </footer>
     </div>
   );
