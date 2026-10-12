@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw
 } from 'lucide-react';
 
 /* ============================================================================
@@ -91,6 +91,12 @@ export default function App() {
   // Wake Lock Ref
   const wakeLockRef = useRef(null);
 
+  // Math Problem Set Storage & Selection State
+  const [mathProblems, setMathProblems] = useState([]);
+  const [currentMathIndex, setCurrentMathIndex] = useState(0);
+  const [showSolution, setShowSolution] = useState(false);
+  const [mathLoading, setMathLoading] = useState(true);
+
   // Calisthenics Tracks & Progression Ladder State
   const [caliTracks, setCaliTracks] = useState(() => {
     const saved = localStorage.getItem('shadow_cali_tracks_v1');
@@ -139,8 +145,82 @@ export default function App() {
   const [caliTimer, setCaliTimer] = useState({ active: false, secondsLeft: 30, total: 30 });
   const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60 });
 
-  // Math Solved State
-  const [solvedMath, setSolvedMath] = useState({});
+  // --- Fetch & Parse Math Problem Set Markdown File ---
+  useEffect(() => {
+    async function fetchMathProblems() {
+      try {
+        const response = await fetch('./math/paper_problem_sets.md');
+        const text = await response.text();
+
+        // Parse markdown blocks split by headers (##) or numbered items
+        const rawBlocks = text.split(/(?=##\s+|###\s+)/g).filter(b => b.trim().length > 0);
+
+        const parsed = rawBlocks.map((block, idx) => {
+          const lines = block.trim().split('\n');
+          const titleLine = lines[0] ? lines[0].replace(/^#+\s*/, '').trim() : `Problem #${idx + 1}`;
+
+          let domain = 'Mathematics & Logic';
+          let problemText = '';
+          let solutionText = '';
+
+          let currentSection = 'problem';
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.toLowerCase().includes('domain:')) {
+              domain = line.split(':')[1].trim();
+            } else if (line.toLowerCase().includes('solution:') || line.toLowerCase().includes('derivation:')) {
+              currentSection = 'solution';
+            } else {
+              if (currentSection === 'problem') {
+                problemText += line + '\n';
+              } else {
+                solutionText += line + '\n';
+              }
+            }
+          }
+
+          return {
+            id: idx + 1,
+            title: titleLine,
+            domain: domain,
+            problem: problemText.trim() || block,
+            solution: solutionText.trim() || 'Derivation available on scratchpad.'
+          };
+        });
+
+        if (parsed.length > 0) {
+          setMathProblems(parsed);
+
+          // Generate a deterministic seed index from today's date (YYYYMMDD)
+          const dateSeed = parseInt(todayStr.replace(/-/g, ''), 10);
+          const dailyIndex = dateSeed % parsed.length;
+          setCurrentMathIndex(dailyIndex);
+        }
+      } catch (err) {
+        console.warn('Fallback to local problem set:', err);
+      } finally {
+        setMathLoading(false);
+      }
+    }
+
+    fetchMathProblems();
+  }, [todayStr]);
+
+  // --- Select Random Problem ---
+  const handleRegenerateProblem = () => {
+    systemAudio.playSound('beep');
+    setShowSolution(false);
+    if (mathProblems.length === 0) return;
+
+    // Pick a new random index different from current
+    let nextIndex = currentMathIndex;
+    if (mathProblems.length > 1) {
+      while (nextIndex === currentMathIndex) {
+        nextIndex = Math.floor(Math.random() * mathProblems.length);
+      }
+    }
+    setCurrentMathIndex(nextIndex);
+  };
 
   // --- Auto Date Rollover Effect ---
   useEffect(() => {
@@ -290,6 +370,7 @@ export default function App() {
   }, [mobilityTimer.active, mobilityTimer.secondsLeft]);
 
   const pendingCount = Object.values(pillars).filter(p => !p.completedToday).length;
+  const currentProblem = mathProblems[currentMathIndex];
 
   return (
     <div className="min-h-screen bg-[#09090B] text-slate-100 flex flex-col font-sans select-none">
@@ -620,78 +701,67 @@ export default function App() {
           </div>
         )}
 
-        {/* MATH & LOGIC */}
+        {/* MATH & LOGIC (DAILY SINGLE PROBLEM + RANDOM REGENERATION) */}
         {activeTab === 'math' && (
-          <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">PENCIL & PAPER MATH PROBLEMS</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Rigorous analytical problems formatted for paper derivations.</p>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
+                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your 300-problem Markdown repository.</p>
+              </div>
+
+              <button
+                onClick={handleRegenerateProblem}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-[#00E5FF]/40 text-[#00E5FF] rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(0,229,255,0.1)]"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Regenerate Random Problem
+              </button>
             </div>
 
-            <div className="space-y-4">
-              {[
-                {
-                  id: 1,
-                  title: 'Linear Algebra: Eigenvalues & Characteristic Matrix',
-                  domain: 'Linear Algebra / Control Systems',
-                  problem: 'Given matrix A = [[2, 1], [0, 3]], compute the characteristic polynomial det(A - λI) = 0, find eigenvalues λ1, λ2, and derive eigenvectors.',
-                  solution: `1. Characteristic Equation: det(A - λI) = det([[2-λ, 1], [0, 3-λ]]) = 0.
-2. Polynomial: (2 - λ)(3 - λ) - (0)(1) = 0 => λ² - 5λ + 6 = 0.
-3. Factored: (λ - 2)(λ - 3) = 0 => λ1 = 2, λ2 = 3.
-4. Eigenvector for λ1 = 2: [[0, 1], [0, 1]][v1, v2]^T = 0 => v2 = 0 => v1 = [1, 0]^T.
-5. Eigenvector for λ2 = 3: [[-1, 1], [0, 0]][v1, v2]^T = 0 => -v1 + v2 = 0 => v2 = [1, 1]^T.`
-                },
-                {
-                  id: 2,
-                  title: 'Z-Transform: Pole Stability Analysis',
-                  domain: 'Digital Signal Processing',
-                  problem: 'Determine the stability of transfer function H(z) = 1 / (1 - 1.5z^-1 + 0.5z^-2) by finding poles.',
-                  solution: `1. In positive powers: H(z) = z² / (z² - 1.5z + 0.5).
-2. Denominator roots: z² - 1.5z + 0.5 = 0.
-3. Factor: (z - 1.0)(z - 0.5) = 0 => Poles at z1 = 1.0, z2 = 0.5.
-4. Conclusion: Pole z1 = 1.0 lies on the unit circle boundary (marginally stable).`
-                },
-                {
-                  id: 3,
-                  title: 'Information Theory: Shannon Entropy',
-                  domain: 'Information Theory',
-                  problem: 'A source emits symbols {A, B, C, D} with P = {0.5, 0.25, 0.125, 0.125}. Calculate entropy H(X) in bits.',
-                  solution: `1. Formula: H(X) = - Σ p(x) log2 p(x).
-2. H(X) = - [0.5 log2(0.5) + 0.25 log2(0.25) + 0.125 log2(0.125) + 0.125 log2(0.125)]
-3. H(X) = - [0.5(-1) + 0.25(-2) + 0.125(-3) + 0.125(-3)] = 1.75 bits/symbol.`
-                }
-              ].map(item => (
-                <div key={item.id} className="p-5 rounded-lg border border-slate-800 bg-slate-900/50 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono px-2 py-0.5 bg-cyan-950 text-[#00E5FF] border border-[#00E5FF]/30 rounded">
-                      {item.domain}
-                    </span>
-                    <span className="text-xs font-mono text-slate-400">Problem #{item.id}</span>
-                  </div>
-                  <h3 className="font-mono font-bold text-base text-white">{item.title}</h3>
-                  <p className="text-sm font-mono text-slate-300 bg-slate-950 p-3 rounded border border-slate-800/80">
-                    {item.problem}
-                  </p>
-
-                  <div className="pt-2">
-                    <button
-                      onClick={() => setSolvedMath(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded font-mono text-xs transition flex items-center gap-2"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-[#00E5FF]" />
-                      {solvedMath[item.id] ? 'Hide Solution' : 'View Written Derivation'}
-                    </button>
-
-                    {solvedMath[item.id] && (
-                      <div className="mt-3 p-4 bg-slate-950 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 whitespace-pre-wrap">
-                        <span className="text-emerald-400 font-bold block mb-1">=== DERIVATION & BOXED ANSWER ===</span>
-                        {item.solution}
-                      </div>
-                    )}
-                  </div>
+            {mathLoading ? (
+              <div className="p-8 text-center font-mono text-xs text-slate-400 bg-slate-900/50 rounded-lg border border-slate-800">
+                Loading problem set from paper_problem_sets.md...
+              </div>
+            ) : currentProblem ? (
+              <div className="p-6 rounded-lg border border-slate-800 bg-slate-900/60 space-y-4 shadow-lg">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950 text-[#00E5FF] border border-[#00E5FF]/30 rounded">
+                    {currentProblem.domain}
+                  </span>
+                  <span className="text-xs font-mono text-slate-400">
+                    Problem #{currentProblem.id} of {mathProblems.length}
+                  </span>
                 </div>
-              ))}
-            </div>
+
+                <h3 className="font-mono font-bold text-lg text-white">{currentProblem.title}</h3>
+
+                <div className="text-sm font-mono text-slate-200 bg-slate-950 p-4 rounded border border-slate-800/90 whitespace-pre-wrap leading-relaxed">
+                  {currentProblem.problem}
+                </div>
+
+                <div className="pt-2 flex flex-col gap-3">
+                  <button
+                    onClick={() => setShowSolution(!showSolution)}
+                    className="self-start px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded font-mono text-xs transition flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4 text-[#00E5FF]" />
+                    {showSolution ? 'Hide Derivation & Solution' : 'View Written Derivation & Solution'}
+                  </button>
+
+                  {showSolution && (
+                    <div className="p-4 bg-slate-950 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed">
+                      <span className="text-emerald-400 font-bold block mb-2">=== STEP-BY-STEP DERIVATION ===</span>
+                      {currentProblem.solution}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 text-center font-mono text-xs text-red-400 bg-slate-900/50 rounded-lg border border-slate-800">
+                No problems found in paper_problem_sets.md. Please check the file path in public/math/.
+              </div>
+            )}
           </div>
         )}
 
