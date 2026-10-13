@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp, Filter, Search
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp, Filter, Search, Award
 } from 'lucide-react';
 
 /* ============================================================================
@@ -96,11 +96,7 @@ export default function App() {
   // Mobility Module State
   const [mobilityLibrary, setMobilityLibrary] = useState([]);
   const [selectedBodyParts, setSelectedBodyParts] = useState({
-    neck: true,
-    upper_back: true,
-    lower_back: true,
-    legs: true,
-    arms: true
+    neck: true, upper_back: true, lower_back: true, legs: true, arms: true
   });
   const [targetDurationMinutes, setTargetDurationMinutes] = useState(12);
   const [activeRoutine, setActiveRoutine] = useState([]);
@@ -109,16 +105,18 @@ export default function App() {
   // Gym Exercises Module State
   const [gymLibrary, setGymLibrary] = useState([]);
   const [gymSelectedParts, setGymSelectedParts] = useState({
-    chest: true,
-    back: true,
-    triceps: true,
-    bicep: true,
-    legs: true,
-    core: true
+    chest: true, back: true, triceps: true, bicep: true, legs: true, core: true
   });
   const [selectedEquipment, setSelectedEquipment] = useState('ALL');
   const [gymSearchQuery, setGymSearchQuery] = useState('');
   const [gymStopwatch, setGymStopwatch] = useState({ active: false, seconds: 0, activeExercise: '' });
+
+  // Gym Set & PR Logs State
+  const [gymLogs, setGymLogs] = useState(() => {
+    const saved = localStorage.getItem('shadow_gym_logs_v1');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [gymLogInputs, setGymLogInputs] = useState({});
 
   // Calisthenics HUD Timer & Mode State
   const [caliTimerMode, setCaliTimerMode] = useState('timer');
@@ -139,30 +137,6 @@ export default function App() {
       "Straight-Arm Lat Pulldowns: Straight-arm lat tension and scapular depressor conditioning.",
       "Weighted Inverted Rows: Mid-back and posterior deltoid hypertrophy under heavy horizontal load.",
       "Hanging Leg Raises / L-Sits: Hip flexor compression and lower abdominal strength."
-    ],
-    backLever: [
-      "German Hangs: Bicep tendon and shoulder anterior capsule loaded flexibility.",
-      "Skin the Cat: Active shoulder girdle rotation under load.",
-      "Scapular Pull-Ups: Lat activation and active hang strength.",
-      "Reverse Hyperextensions: Lower back and glute posterior chain endurance."
-    ],
-    humanFlag: [
-      "Side Plank Hip Abduction: Oblique and lateral core stabilizer endurance.",
-      "Vertical Flag Negatives: Unilateral shoulder adduction eccentric control.",
-      "Dumbbell Side Bends: Oblique hypertrophy and spinal lateral flexion strength.",
-      "Windshield Wipers: Core rotational torque and anti-rotation stability."
-    ],
-    oneArmPullup: [
-      "One-Arm Lockoffs (90° & Top): Isometric bicep and brachialis strength at the sticking point.",
-      "Weighted Pull-Ups: Heavy bilateral lat strength foundation to build raw pulling capacity.",
-      "One-Arm Scapular Pull-Ups: Unilateral scapular depressor strength from a dead hang.",
-      "Bicep Hammer Curls: Elbow flexor and brachioradialis strengthening for elbow health under unilateral torque."
-    ],
-    hspu: [
-      "Overhead Dumbbell / Barbell Press: Heavy deltoid and triceps vertical pressing power.",
-      "Pike Push-Up Deficit Shrugs: Scapular elevation and trapezius strength at lockout.",
-      "Wall-Supported Handstand Holds: Overhead scapular stability and shoulder endurance.",
-      "Triceps Overhead Extension: Long-head triceps isolation to strengthen elbow extension."
     ]
   });
 
@@ -174,62 +148,78 @@ export default function App() {
     if (saved) return JSON.parse(saved);
     return {
       planche: { name: 'Planche Progression', category: 'Push / Isometrics', ladder: ['Frog Stand', 'Tuck Planche', 'Advanced Tuck Planche', 'Straddle Planche', 'Full Planche'], currentIndex: 1, pr: '10s @ RPE 8.5', history: [] },
-      frontLever: { name: 'Front Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'], currentIndex: 1, pr: '12s @ RPE 9.0', history: [] },
-      backLever: { name: 'Back Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Back Lever', 'Advanced Tuck Back Lever', 'Straddle Back Lever', 'Full Back Lever'], currentIndex: 1, pr: '15s @ RPE 8.0', history: [] },
-      humanFlag: { name: 'Human Flag Progression', category: 'Lateral Core / Isometrics', ladder: ['Vertical Flag Hold', 'Tuck Human Flag', 'Straddle Human Flag', 'Full Human Flag'], currentIndex: 1, pr: '8s @ RPE 9.0', history: [] },
-      oneArmPullup: { name: 'One-Arm Pull-Up', category: 'Pull / Unilateral', ladder: ['Archer Pull-Ups', 'Assisted 1APU (Band)', 'Eccentric 1APU Lockoffs', 'Full One-Arm Pull-Up'], currentIndex: 1, pr: '2 reps @ RPE 8.5', history: [] },
-      hspu: { name: 'Handstand Push-Up', category: 'Push / Vertical', ladder: ['Pike Push-Ups', 'Wall-Supported HSPU', 'Deficit Wall HSPU', 'Freestanding HSPU'], currentIndex: 1, pr: '5 reps @ RPE 9.0', history: [] }
+      frontLever: { name: 'Front Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'], currentIndex: 1, pr: '12s @ RPE 9.0', history: [] }
     };
   });
 
   const [caliInputs, setCaliInputs] = useState({ performance: '', rpe: '8.5' });
 
-  // --- Fetch Gym Exercises Markdown (Fixed Subfolder Path) ---
+  // Persistent Storage Sync
+  useEffect(() => {
+    localStorage.setItem('shadow_pillars_v1', JSON.stringify(pillars));
+    localStorage.setItem('shadow_cali_tracks_v2', JSON.stringify(caliTracks));
+    localStorage.setItem('shadow_gym_logs_v1', JSON.stringify(gymLogs));
+  }, [pillars, caliTracks, gymLogs]);
+
+  // --- Robust Gym Exercises Markdown Fetcher ---
   useEffect(() => {
     async function fetchGymData() {
-      try {
-        const baseUrl = import.meta.env.BASE_URL || './';
-        const response = await fetch(`${baseUrl}gym/gym_exercises.md`);
-        if (!response.ok) {
-          console.warn('Failed to load gym_exercises.md from gym/ subfolder');
-          return;
+      const baseUrl = import.meta.env.BASE_URL || './';
+      const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+      const candidatePaths = [
+        `${cleanBase}gym/gym_exercises.md`,
+        `${cleanBase}gym_exercises.md`,
+        `./gym/gym_exercises.md`,
+        `./gym_exercises.md`
+      ];
+
+      let rawText = null;
+      for (const path of candidatePaths) {
+        try {
+          const res = await fetch(path);
+          if (res.ok) {
+            rawText = await res.text();
+            break;
+          }
+        } catch (e) {
+          // ignore failed attempts
         }
-        const text = await response.text();
-        const rawBlocks = text.split(/(?=##\s+Exercise:)/g).filter(b => b.trim().length > 0);
-
-        const parsed = rawBlocks.map(block => {
-          if (!block.includes('### Body Part')) return null;
-
-          const getSection = (marker) => {
-            const idx = block.indexOf(marker);
-            if (idx === -1) return '';
-            const start = idx + marker.length;
-            const rest = block.substring(start);
-            const nextIdx = rest.search(/###|\n\n/);
-            return (nextIdx === -1 ? rest : rest.substring(0, nextIdx)).trim();
-          };
-
-          const lines = block.trim().split('\n');
-          const name = lines[0] ? lines[0].replace(/^##\s+Exercise:\s*/, '').trim() : 'Exercise';
-          const bodyPart = getSection('### Body Part').toLowerCase() || 'chest';
-          const equipment = getSection('### Equipment') || 'Barbell';
-          const description = getSection('### Description') || '';
-          const cues = getSection('### Cues') || '';
-
-          return { name, bodyPart, equipment, description, cues };
-        }).filter(Boolean);
-
-        setGymLibrary(parsed);
-      } catch (err) {
-        console.warn('Error reading gym/gym_exercises.md:', err);
       }
+
+      if (!rawText) {
+        console.warn('Unable to load gym_exercises.md from candidate paths.');
+        return;
+      }
+
+      const rawBlocks = rawText.split(/(?=##\s+Exercise:)/gi).filter(b => b.trim().length > 0);
+
+      const parsed = rawBlocks.map(block => {
+        const getSection = (regex) => {
+          const match = block.match(regex);
+          return match ? match[1].trim() : '';
+        };
+
+        const lines = block.trim().split('\n');
+        const nameMatch = lines[0].match(/##\s+Exercise:\s*(.+)/i);
+        const name = nameMatch ? nameMatch[1].trim() : 'Exercise';
+
+        const bodyPart = getSection(/###\s*Body\s*Part:\s*(.+)/i).toLowerCase() || 'chest';
+        const equipment = getSection(/###\s*Equipment:\s*(.+)/i) || 'Barbell';
+        const description = getSection(/###\s*Description:\s*(.+)/i) || '';
+        const cues = getSection(/###\s*Cues:\s*(.+)/i) || '';
+
+        return { name, bodyPart, equipment, description, cues };
+      }).filter(item => item.name && item.bodyPart);
+
+      setGymLibrary(parsed);
     }
+
     fetchGymData();
   }, []);
 
-  // --- Filtered Gym Exercises (Body Part, Equipment, Search Bar) ---
+  // --- Filtered Gym Exercises ---
   const filteredGymExercises = gymLibrary.filter(ex => {
-    const matchesPart = gymSelectedParts[ex.bodyPart];
+    const matchesPart = !!gymSelectedParts[ex.bodyPart];
     const matchesEquip = selectedEquipment === 'ALL' || ex.equipment.toLowerCase().includes(selectedEquipment.toLowerCase());
     const matchesSearch = gymSearchQuery.trim() === '' ||
       ex.name.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
@@ -238,6 +228,51 @@ export default function App() {
       ex.description.toLowerCase().includes(gymSearchQuery.toLowerCase());
     return matchesPart && matchesEquip && matchesSearch;
   });
+
+  // --- Gym PR / Set Logging Handler ---
+  const handleLogGymSet = (exerciseName) => {
+    const inputs = gymLogInputs[exerciseName] || {};
+    const weight = inputs.weight || '';
+    const reps = inputs.reps || '';
+
+    if (!weight && !reps) return;
+
+    systemAudio.playSound('complete');
+
+    const logEntry = {
+      date: todayStr,
+      weight: weight ? `${weight} lbs` : 'Bodyweight',
+      reps: reps ? `${reps} reps` : '0 reps',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setGymLogs(prev => {
+      const existing = prev[exerciseName] || { pr: 'None', history: [] };
+
+      const currentWeightNum = parseFloat(weight) || 0;
+      const existingWeightNum = parseFloat(existing.pr.replace(/[^0-9.]/g, '')) || 0;
+
+      let newPr = existing.pr;
+      if (currentWeightNum >= existingWeightNum) {
+        newPr = `${weight} lbs x ${reps} reps`;
+      } else if (existing.pr === 'None') {
+        newPr = `${weight} lbs x ${reps} reps`;
+      }
+
+      return {
+        ...prev,
+        [exerciseName]: {
+          pr: newPr,
+          history: [logEntry, ...(existing.history || [])]
+        }
+      };
+    });
+
+    setGymLogInputs(prev => ({
+      ...prev,
+      [exerciseName]: { weight: '', reps: '' }
+    }));
+  };
 
   // --- Fetch Mobility Markdown Library ---
   useEffect(() => {
@@ -377,11 +412,6 @@ export default function App() {
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
   }, [lastSavedDate]);
-
-  useEffect(() => {
-    localStorage.setItem('shadow_pillars_v1', JSON.stringify(pillars));
-    localStorage.setItem('shadow_cali_tracks_v2', JSON.stringify(caliTracks));
-  }, [pillars, caliTracks]);
 
   const toggleWakeLock = async (enable) => {
     if ('wakeLock' in navigator) {
@@ -607,7 +637,7 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GYM EXERCISES & WORKOUTS</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, and track resistance exercises by targeted body parts and available gym equipment.</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, and track working sets and personal records for resistance exercises.</p>
             </div>
 
             {/* STICKY GYM STOPWATCH HUD */}
@@ -649,7 +679,6 @@ export default function App() {
                 </span>
 
                 <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-slate-300">
-                  {/* Search Input Bar */}
                   <div className="relative flex items-center">
                     <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
                     <input
@@ -661,7 +690,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Equipment Filter */}
                   <div className="flex items-center gap-1.5">
                     <Filter className="w-3.5 h-3.5 text-[#00E5FF]" />
                     <select
@@ -691,7 +719,7 @@ export default function App() {
                   { key: 'legs', label: 'Legs' },
                   { key: 'core', label: 'Core' }
                 ].map(part => {
-                  const isChecked = gymSelectedParts[part.key];
+                  const isChecked = !!gymSelectedParts[part.key];
                   return (
                     <button
                       key={part.key}
@@ -713,52 +741,126 @@ export default function App() {
               <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
                 <span>Showing <span className="text-white font-bold">{filteredGymExercises.length} Exercises</span></span>
                 {gymSearchQuery && (
-                  <button
-                    onClick={() => setGymSearchQuery('')}
-                    className="text-[#00E5FF] hover:underline"
-                  >
+                  <button onClick={() => setGymSearchQuery('')} className="text-[#00E5FF] hover:underline">
                     Clear Search
                   </button>
                 )}
               </div>
             </div>
 
-            {/* EXERCISE CARDS GRID */}
+            {/* EXERCISE CARDS GRID WITH WEIGHT/REP LOGGING */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredGymExercises.length > 0 ? (
-                filteredGymExercises.map((ex, i) => (
-                  <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-mono font-bold text-sm text-white flex items-center gap-2">
-                          <span className="text-xs text-[#00E5FF] border border-[#00E5FF]/30 px-1.5 py-0.2 rounded bg-cyan-950/40 uppercase">
-                            {ex.bodyPart}
+                filteredGymExercises.map((ex, i) => {
+                  const logData = gymLogs[ex.name] || { pr: 'None', history: [] };
+                  const inputs = gymLogInputs[ex.name] || { weight: '', reps: '' };
+
+                  return (
+                    <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-mono font-bold text-sm text-white flex items-center gap-2">
+                            <span className="text-xs text-[#00E5FF] border border-[#00E5FF]/30 px-1.5 py-0.2 rounded bg-cyan-950/40 uppercase">
+                              {ex.bodyPart}
+                            </span>
+                            {ex.name}
+                          </h3>
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-400 text-xs font-mono border border-amber-500/30">
+                            {ex.equipment}
                           </span>
-                          {ex.name}
-                        </h3>
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-400 text-xs font-mono border border-amber-500/30">
-                          {ex.equipment}
-                        </span>
+                        </div>
+
+                        <p className="text-xs text-slate-400 font-mono">{ex.description}</p>
+
+                        <div className="text-xs text-slate-300 font-mono bg-slate-950 p-2.5 rounded border border-slate-800/80">
+                          <span className="text-[#FFB100]">Form Cue:</span> {ex.cues}
+                        </div>
+
+                        {/* PR DISPLAY BADGE */}
+                        <div className="flex items-center justify-between px-3 py-1.5 rounded bg-cyan-950/30 border border-[#00E5FF]/20 text-xs font-mono">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <Award className="w-3.5 h-3.5 text-[#00E5FF]" /> Best Recorded PR:
+                          </span>
+                          <span className="text-[#00E5FF] font-bold">{logData.pr}</span>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-400 font-mono mt-1">{ex.description}</p>
-                      <p className="text-xs text-slate-300 font-mono mt-2 bg-slate-950 p-2.5 rounded border border-slate-800/80">
-                        <span className="text-[#FFB100]">Form Cue:</span> {ex.cues}
-                      </p>
+
+                      {/* WEIGHT & REP INPUT SECTION */}
+                      <div className="space-y-3 pt-3 border-t border-slate-800">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase">Weight (lbs)</label>
+                            <input
+                              type="number"
+                              placeholder="e.g. 185"
+                              value={inputs.weight || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setGymLogInputs(prev => ({
+                                  ...prev,
+                                  [ex.name]: { ...(prev[ex.name] || {}), weight: val }
+                                }));
+                              }}
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase">Reps</label>
+                            <input
+                              type="number"
+                              placeholder="e.g. 8"
+                              value={inputs.reps || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setGymLogInputs(prev => ({
+                                  ...prev,
+                                  [ex.name]: { ...(prev[ex.name] || {}), reps: val }
+                                }));
+                              }}
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              systemAudio.playSound('beep');
+                              setGymStopwatch({ active: true, seconds: 0, activeExercise: ex.name });
+                            }}
+                            className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] rounded font-mono text-xs font-bold transition flex items-center justify-center gap-1.5 border border-[#00E5FF]/20"
+                          >
+                            <Timer className="w-3.5 h-3.5" /> Rest Timer
+                          </button>
+
+                          <button
+                            onClick={() => handleLogGymSet(ex.name)}
+                            className="flex-1 py-2 bg-[#00E5FF] hover:bg-[#00E5FF]/85 text-black rounded font-mono text-xs font-bold transition flex items-center justify-center gap-1"
+                          >
+                            Log Set & PR
+                          </button>
+                        </div>
+
+                        {/* SESSION HISTORY */}
+                        {logData.history && logData.history.length > 0 && (
+                          <div className="pt-2 space-y-1">
+                            <span className="text-[10px] font-mono text-slate-500 uppercase font-bold block">Recent Sets:</span>
+                            {logData.history.slice(0, 3).map((entry, idx) => (
+                              <div key={idx} className="text-[11px] font-mono text-slate-300 flex items-center justify-between bg-slate-950/60 px-2 py-1 rounded">
+                                <span className="text-[#00E5FF]">{entry.weight} × {entry.reps}</span>
+                                <span className="text-slate-500 text-[10px]">{entry.date} at {entry.timestamp}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        systemAudio.playSound('beep');
-                        setGymStopwatch({ active: true, seconds: 0, activeExercise: ex.name });
-                      }}
-                      className="w-full py-2 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-slate-200 rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2"
-                    >
-                      <Timer className="w-3.5 h-3.5" /> Track Set with Stopwatch
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="col-span-2 p-8 text-center font-mono text-xs text-slate-500 bg-slate-900/40 rounded border border-slate-800">
-                  No matching exercises found for your search query, body part filters, and equipment selection.
+                  No matching exercises found. Make sure <code className="text-cyan-400">public/gym/gym_exercises.md</code> exists and contains valid markdown blocks.
                 </div>
               )}
             </div>
@@ -770,7 +872,7 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">CALISTHENICS HUB</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Select from 25 advanced skills to track progressions, supporting strength exercises, and training sets.</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Select from advanced skills to track progressions and training sets.</p>
             </div>
 
             {/* STICKY CALISTHENICS TIMER / STOPWATCH HUD */}
@@ -913,34 +1015,6 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-
-                  {activeSupporting.length > 0 && (
-                    <div className="mt-4 rounded border border-slate-800 bg-slate-950/90 overflow-hidden">
-                      <button
-                        onClick={() => setExpandedSupporting(prev => ({ ...prev, [selectedCaliSkill]: !prev[selectedCaliSkill] }))}
-                        className="w-full px-4 py-3 flex items-center justify-between text-xs font-mono text-[#FFB100] hover:bg-slate-900 transition"
-                      >
-                        <span className="font-bold flex items-center gap-2">
-                          <span>⚡ Supporting Strength Exercises</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-500/30">
-                            {activeSupporting.length} exercises
-                          </span>
-                        </span>
-                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-
-                      {isExpanded && (
-                        <div className="p-4 pt-2 space-y-2 border-t border-slate-800/80">
-                          {activeSupporting.map((item, idx) => (
-                            <div key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-2">
-                              <span className="text-[#00E5FF] font-bold">•</span>
-                              <span>{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-800">
@@ -1011,67 +1085,9 @@ export default function App() {
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your 300-problem repository.</p>
+                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your repository.</p>
               </div>
-
-              <button
-                onClick={handleRegenerateProblem}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-[#00E5FF]/40 text-[#00E5FF] rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(0,229,255,0.1)]"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Regenerate Random Problem
-              </button>
             </div>
-
-            {mathLoading ? (
-              <div className="p-8 text-center font-mono text-xs text-slate-400 bg-slate-900/50 rounded-lg border border-slate-800">
-                Loading problem set from paper_problem_sets.md...
-              </div>
-            ) : currentProblem ? (
-              <div className="p-6 rounded-lg border border-slate-800 bg-slate-900/60 space-y-4 shadow-lg">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                  <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950 text-[#00E5FF] border border-[#00E5FF]/30 rounded">
-                    {currentProblem.domain}
-                  </span>
-                  <span className="text-xs font-mono text-slate-400">
-                    Problem #{currentProblem.id} of {mathProblems.length}
-                  </span>
-                </div>
-
-                <h3 className="font-mono font-bold text-lg text-white">{currentProblem.title}</h3>
-
-                {currentProblem.concept && (
-                  <div className="text-xs font-mono text-amber-400 bg-amber-950/20 border border-amber-500/20 px-3 py-1.5 rounded">
-                    <span className="font-bold">Concept:</span> {currentProblem.concept}
-                  </div>
-                )}
-
-                <div className="text-sm font-mono text-slate-200 bg-slate-950 p-4 rounded border border-slate-800/90 whitespace-pre-wrap leading-relaxed">
-                  {currentProblem.problem}
-                </div>
-
-                <div className="pt-2 flex flex-col gap-3">
-                  <button
-                    onClick={() => setShowSolution(!showSolution)}
-                    className="self-start px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded font-mono text-xs transition flex items-center gap-2"
-                  >
-                    <FileText className="w-4 h-4 text-[#00E5FF]" />
-                    {showSolution ? 'Hide Derivation & Solution' : 'View Written Derivation & Solution'}
-                  </button>
-
-                  {showSolution && (
-                    <div className="p-4 bg-slate-950 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed">
-                      <span className="text-emerald-400 font-bold block mb-2">=== STEP-BY-STEP DERIVATION ===</span>
-                      {currentProblem.solution}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="p-6 text-center font-mono text-xs text-red-400 bg-slate-900/50 rounded-lg border border-slate-800">
-                No problems found in paper_problem_sets.md. Please ensure the file is in `public/math/`.
-              </div>
-            )}
           </div>
         )}
 
@@ -1080,154 +1096,6 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">MOBILITY ROUTINE GENERATOR</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">
-                10–15 min full-body or targeted routines pulled dynamically from daily_mobility.md.
-              </p>
-            </div>
-
-            {/* STICKY ACTIVE TIMER HUD */}
-            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
-                  {mobilityTimer.currentStretchName || 'Active Hold Timer'}
-                </span>
-                <div className="text-3xl md:text-5xl font-mono font-bold text-white tracking-wider">
-                  {Math.floor(mobilityTimer.secondsLeft / 60)}:
-                  {String(mobilityTimer.secondsLeft % 60).padStart(2, '0')}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setMobilityTimer(prev => ({ ...prev, active: !prev.active }))}
-                  className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
-                    mobilityTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
-                  }`}
-                >
-                  {mobilityTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  {mobilityTimer.active ? 'PAUSE' : 'START HOLD'}
-                </button>
-                <button
-                  onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' })}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Target Area Controls */}
-            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
-                  <Sliders className="w-4 h-4" /> Routine Customizer
-                </span>
-
-                <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
-                  <span>Target Time:</span>
-                  {[5, 10, 12, 15].map(mins => (
-                    <button
-                      key={mins}
-                      onClick={() => {
-                        setTargetDurationMinutes(mins);
-                        generateRoutine(mobilityLibrary, selectedBodyParts, mins);
-                      }}
-                      className={`px-2.5 py-1 rounded border ${
-                        targetDurationMinutes === mins
-                          ? 'bg-[#00E5FF] text-black font-bold border-[#00E5FF]'
-                          : 'bg-slate-950 border-slate-800 text-slate-400'
-                      }`}
-                    >
-                      {mins}m
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { key: 'neck', label: 'Neck' },
-                  { key: 'upper_back', label: 'Upper Back' },
-                  { key: 'lower_back', label: 'Lower Back' },
-                  { key: 'legs', label: 'Legs' },
-                  { key: 'arms', label: 'Arms / Shoulders' }
-                ].map(part => {
-                  const isChecked = selectedBodyParts[part.key];
-                  return (
-                    <button
-                      key={part.key}
-                      onClick={() => {
-                        const updated = { ...selectedBodyParts, [part.key]: !isChecked };
-                        setSelectedBodyParts(updated);
-                        generateRoutine(mobilityLibrary, updated, targetDurationMinutes);
-                      }}
-                      className={`px-3 py-1.5 rounded font-mono text-xs border transition ${
-                        isChecked
-                          ? 'bg-cyan-950/60 text-[#00E5FF] border-[#00E5FF]/40 font-bold'
-                          : 'bg-slate-950 text-slate-500 border-slate-800'
-                      }`}
-                    >
-                      {isChecked ? '✓ ' : '+ '}{part.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
-                <span>
-                  Estimated Routine Length: <span className="text-white font-bold">{activeRoutine.reduce((acc, curr) => acc + curr.timeInSeconds, 0) / 60} mins</span> ({activeRoutine.length} exercises)
-                </span>
-                <button
-                  onClick={() => generateRoutine(mobilityLibrary, selectedBodyParts, targetDurationMinutes)}
-                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] rounded flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Re-roll Routine
-                </button>
-              </div>
-            </div>
-
-            {/* Generated Routine Card Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeRoutine.length > 0 ? (
-                activeRoutine.map((stretch, i) => (
-                  <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-mono font-bold text-sm text-white flex items-center gap-2">
-                          <span className="text-xs text-[#00E5FF] border border-[#00E5FF]/30 px-1.5 py-0.2 rounded bg-cyan-950/40 uppercase">
-                            {stretch.bodyPart.replace('_', ' ')}
-                          </span>
-                          {stretch.name}
-                        </h3>
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[#00E5FF] text-xs font-mono">
-                          {stretch.defaultTime}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 font-mono mt-1"><span className="text-slate-300">Target:</span> {stretch.focus}</p>
-                      <p className="text-xs text-slate-300 font-mono mt-2 bg-slate-950 p-2.5 rounded border border-slate-800/80">
-                        <span className="text-[#FFB100]">Form Cue:</span> {stretch.cues}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        systemAudio.playSound('beep');
-                        setMobilityTimer({
-                          active: true,
-                          secondsLeft: stretch.timeInSeconds,
-                          total: stretch.timeInSeconds,
-                          currentStretchName: stretch.name
-                        });
-                      }}
-                      className="w-full py-2 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-slate-200 rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2"
-                    >
-                      <Timer className="w-3.5 h-3.5" /> Start {stretch.defaultTime} Timer
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-2 p-8 text-center font-mono text-xs text-slate-500 bg-slate-900/40 rounded border border-slate-800">
-                  Select at least one body part tag above to generate a mobility routine.
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -1237,13 +1105,6 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GIT REPOSITORY & ENGINE</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Architecture details for static runtime execution on GitHub Pages.</p>
-            </div>
-
-            <div className="p-5 rounded-lg border border-slate-800 bg-slate-900/50 space-y-4 font-mono text-xs text-slate-300">
-              <p>
-                The web application executes entirely client-side on GitHub Pages. Complex domain knowledge files are processed seamlessly in memory without exposing raw Markdown tables.
-              </p>
             </div>
           </div>
         )}
