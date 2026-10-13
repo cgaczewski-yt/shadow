@@ -80,18 +80,14 @@ export default function App() {
     };
   });
 
-  // Last active date check for auto-reset / rollover
   const [lastSavedDate, setLastSavedDate] = useState(() => {
     return localStorage.getItem('shadow_last_date_v1') || todayStr;
   });
 
-  // Countdown to midnight
   const [timeLeftToday, setTimeLeftToday] = useState({ hours: 0, minutes: 0, seconds: 0 });
-
-  // Wake Lock Ref
   const wakeLockRef = useRef(null);
 
-  // Math Problem Set Storage & Selection State
+  // Math Problem Set State & Robust Parser
   const [mathProblems, setMathProblems] = useState([]);
   const [currentMathIndex, setCurrentMathIndex] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
@@ -133,7 +129,6 @@ export default function App() {
     };
   });
 
-  // Calisthenics Form Inputs State
   const [caliInputs, setCaliInputs] = useState({
     planche: { performance: '', rpe: '8.5' },
     frontLever: { performance: '', rpe: '8.5' },
@@ -141,63 +136,62 @@ export default function App() {
     hspu: { performance: '', rpe: '8.5' }
   });
 
-  // Timers State
   const [caliTimer, setCaliTimer] = useState({ active: false, secondsLeft: 30, total: 30 });
   const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60 });
 
-  // --- Fetch & Parse Math Problem Set Markdown File ---
+  // --- Robust Markdown Parser for 300 Problems File ---
   useEffect(() => {
     async function fetchMathProblems() {
       try {
         const response = await fetch('./math/paper_problem_sets.md');
         const text = await response.text();
 
-        // Parse markdown blocks split by headers (##) or numbered items
-        const rawBlocks = text.split(/(?=##\s+|###\s+)/g).filter(b => b.trim().length > 0);
+        // Split by problem headers (## Problem)
+        const rawBlocks = text.split(/(?=##\s+Problem)/g).filter(b => b.trim().length > 0);
 
         const parsed = rawBlocks.map((block, idx) => {
           const lines = block.trim().split('\n');
-          const titleLine = lines[0] ? lines[0].replace(/^#+\s*/, '').trim() : `Problem #${idx + 1}`;
+          const titleLine = lines.find(l => l.startsWith('## ')) || lines[0] || `Problem ${idx + 1}`;
+          const title = titleLine.replace(/^##\s*/, '').trim();
 
-          let domain = 'Mathematics & Logic';
-          let problemText = '';
-          let solutionText = '';
+          const getSection = (startMarker, endMarkers) => {
+            const startIndex = block.indexOf(startMarker);
+            if (startIndex === -1) return '';
+            const contentStart = startIndex + startMarker.length;
 
-          let currentSection = 'problem';
-          for (let i = 1; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.toLowerCase().includes('domain:')) {
-              domain = line.split(':')[1].trim();
-            } else if (line.toLowerCase().includes('solution:') || line.toLowerCase().includes('derivation:')) {
-              currentSection = 'solution';
-            } else {
-              if (currentSection === 'problem') {
-                problemText += line + '\n';
-              } else {
-                solutionText += line + '\n';
+            let endIndex = block.length;
+            for (const em of endMarkers) {
+              const emIndex = block.indexOf(em, contentStart);
+              if (emIndex !== -1 && emIndex < endIndex) {
+                endIndex = emIndex;
               }
             }
-          }
+            return block.substring(contentStart, endIndex).trim();
+          };
+
+          const category = getSection('### Category', ['### Concept', '### Statement', '### Paper Derivation & Solution']);
+          const concept = getSection('### Concept', ['### Statement', '### Paper Derivation & Solution']);
+          const statement = getSection('### Statement', ['### Paper Derivation & Solution']);
+          const solution = getSection('### Paper Derivation & Solution', []);
 
           return {
             id: idx + 1,
-            title: titleLine,
-            domain: domain,
-            problem: problemText.trim() || block,
-            solution: solutionText.trim() || 'Derivation available on scratchpad.'
+            title: title,
+            domain: category || 'Engineering Math',
+            concept: concept || '',
+            problem: statement || block,
+            solution: solution || 'Derivation available on scratchpad.'
           };
-        });
+        }).filter(p => p.problem.length > 0);
 
         if (parsed.length > 0) {
           setMathProblems(parsed);
-
-          // Generate a deterministic seed index from today's date (YYYYMMDD)
           const dateSeed = parseInt(todayStr.replace(/-/g, ''), 10);
           const dailyIndex = dateSeed % parsed.length;
           setCurrentMathIndex(dailyIndex);
         }
       } catch (err) {
-        console.warn('Fallback to local problem set:', err);
+        console.warn('Error fetching paper_problem_sets.md:', err);
       } finally {
         setMathLoading(false);
       }
@@ -206,13 +200,11 @@ export default function App() {
     fetchMathProblems();
   }, [todayStr]);
 
-  // --- Select Random Problem ---
   const handleRegenerateProblem = () => {
     systemAudio.playSound('beep');
     setShowSolution(false);
     if (mathProblems.length === 0) return;
 
-    // Pick a new random index different from current
     let nextIndex = currentMathIndex;
     if (mathProblems.length > 1) {
       while (nextIndex === currentMathIndex) {
@@ -274,7 +266,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, [lastSavedDate]);
 
-  // --- Save Persistence & App Badging ---
   useEffect(() => {
     localStorage.setItem('shadow_pillars_v1', JSON.stringify(pillars));
     localStorage.setItem('shadow_cali_tracks_v1', JSON.stringify(caliTracks));
@@ -289,7 +280,6 @@ export default function App() {
     }
   }, [pillars, caliTracks]);
 
-  // --- Screen Wake Lock Management ---
   const toggleWakeLock = async (enable) => {
     if ('wakeLock' in navigator) {
       try {
@@ -305,7 +295,6 @@ export default function App() {
     }
   };
 
-  // --- Toggle Pillar Completion ---
   const togglePillar = (key) => {
     systemAudio.playSound('complete');
     setPillars(prev => {
@@ -337,7 +326,6 @@ export default function App() {
     });
   };
 
-  // --- Calisthenics Hold Timer Effect ---
   useEffect(() => {
     let interval = null;
     if (caliTimer.active && caliTimer.secondsLeft > 0) {
@@ -353,7 +341,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, [caliTimer.active, caliTimer.secondsLeft]);
 
-  // --- Mobility Timer Effect ---
   useEffect(() => {
     let interval = null;
     if (mobilityTimer.active && mobilityTimer.secondsLeft > 0) {
@@ -375,9 +362,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#09090B] text-slate-100 flex flex-col font-sans select-none">
       
-      {/* ================================================================== */}
-      {/* HEADER: BRANDING "SHADOW" & RED COUNTDOWN                          */}
-      {/* ================================================================== */}
+      {/* HEADER */}
       <header className="border-b border-slate-800 bg-[#09090B]/90 backdrop-blur sticky top-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
 
@@ -435,9 +420,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* ================================================================== */}
-      {/* QUICK CHECK BAR                                                    */}
-      {/* ================================================================== */}
+      {/* QUICK CHECK BAR */}
       <div className="bg-slate-950/80 border-b border-slate-800 px-4 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto gap-4">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase tracking-widest whitespace-nowrap">
@@ -466,9 +449,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* ================================================================== */}
-      {/* MAIN CONTENT AREA                                                 */}
-      {/* ================================================================== */}
+      {/* MAIN CONTENT AREA */}
       <main className="max-w-7xl w-full mx-auto p-4 md:p-6 flex-1">
 
         {/* DASHBOARD */}
@@ -553,7 +534,6 @@ export default function App() {
                 <p className="text-xs text-slate-400 font-mono mt-1">Autoregulated RPE 8.5–9.0 edge coaching with interactive skill progression ladders.</p>
               </div>
 
-              {/* Calisthenics Active Hold Timer */}
               <div className="p-3.5 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-4">
                 <div>
                   <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">Hold Timer</span>
@@ -581,7 +561,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Skill Tracks */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.entries(caliTracks).map(([skillKey, trackData]) => {
                 const currentStep = trackData.ladder[trackData.currentIndex];
@@ -598,7 +577,6 @@ export default function App() {
                         </span>
                       </div>
 
-                      {/* Interactive Progression Ladder Viewer */}
                       <div className="mt-3 p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
                         <div className="flex items-center justify-between text-xs font-mono text-slate-400">
                           <span>Active Level:</span>
@@ -636,7 +614,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Dual Input Form (Reps/Time + RPE) */}
                     <div className="space-y-3 pt-3 border-t border-slate-800">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -701,13 +678,13 @@ export default function App() {
           </div>
         )}
 
-        {/* MATH & LOGIC (DAILY SINGLE PROBLEM + RANDOM REGENERATION) */}
+        {/* MATH & LOGIC (PARSED FROM 300 PROBLEMS MARKDOWN) */}
         {activeTab === 'math' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your 300-problem Markdown repository.</p>
+                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your 300-problem repository.</p>
               </div>
 
               <button
@@ -736,6 +713,12 @@ export default function App() {
 
                 <h3 className="font-mono font-bold text-lg text-white">{currentProblem.title}</h3>
 
+                {currentProblem.concept && (
+                  <div className="text-xs font-mono text-amber-400 bg-amber-950/20 border border-amber-500/20 px-3 py-1.5 rounded">
+                    <span className="font-bold">Concept:</span> {currentProblem.concept}
+                  </div>
+                )}
+
                 <div className="text-sm font-mono text-slate-200 bg-slate-950 p-4 rounded border border-slate-800/90 whitespace-pre-wrap leading-relaxed">
                   {currentProblem.problem}
                 </div>
@@ -759,7 +742,7 @@ export default function App() {
               </div>
             ) : (
               <div className="p-6 text-center font-mono text-xs text-red-400 bg-slate-900/50 rounded-lg border border-slate-800">
-                No problems found in paper_problem_sets.md. Please check the file path in public/math/.
+                No problems found in paper_problem_sets.md. Please ensure the file is in `public/math/`.
               </div>
             )}
           </div>
