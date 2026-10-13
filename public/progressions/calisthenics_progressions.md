@@ -26,6 +26,12 @@ autoregulation_rules:
 | 2 | Adv Tuck Planche Push-ups | 6 | 8.5 - 9.0 | Shoulder girdle force output |
 | 3 | Straddle Planche Press-to-Handstand | 5 | 9.0 | Scapular depression & compression |
 
+### Supporting Strength Exercises
+* **Pseudo Planche Lean Holds**: Straight-arm protraction with maximum forward shoulder lean.
+* **Hollow Body Rocks**: Core anti-extension stability and pelvic tilt conditioning.
+* **Scapular Protraction Push-Ups**: Serratus anterior isolating push-ups with locked elbows at full extension.
+* **Dumbbell Zanetti Presses**: Forward shoulder raises lying prone to condition the anterior deltoids and biceps tendon.
+
 ---
 
 ## 2. Front Lever
@@ -46,6 +52,12 @@ autoregulation_rules:
 | 2 | Straddle FL Touch Rows | 6 | 8.5 - 9.0 | Concentric peak retraction |
 | 3 | Full FL Pull to Inverted Hang | 5 | 9.0 | Complete kinetic chain pull power |
 
+### Supporting Strength Exercises
+* **Dragon Flags**: Anti-extension posterior core strength and lower back stability.
+* **Straight-Arm Lat Pulldowns**: Straight-arm lat tension and scapular depressor conditioning.
+* **Weighted Inverted Rows**: Mid-back and posterior deltoid hypertrophy under heavy horizontal load.
+* **Hanging Leg Raises / L-Sits**: Hip flexor compression and lower abdominal strength.
+
 ---
 
 ## 3. One-Arm Pull-Up (OAP)
@@ -58,6 +70,12 @@ autoregulation_rules:
 | 2 | Slow Negatives (8s eccentric) | 5 | 9.0 | Tendon remodeling & eccentric motor unit recruitment |
 | 3 | Strict One-Arm Pull-up | 3 | 9.0 - 9.5 | Maximal unilateral vertical pull |
 
+### Supporting Strength Exercises
+* **One-Arm Lockoffs (90° & Top)**: Isometric bicep and brachialis strength at the sticking point.
+* **Weighted Pull-Ups**: Heavy bilateral lat strength foundation to build raw pulling capacity.
+* **One-Arm Scapular Pull-Ups**: Unilateral scapular depressor strength from a dead hang.
+* **Bicep Hammer Curls**: Elbow flexor and brachioradialis strengthening for elbow health under unilateral torque.
+
 ---
 
 ## 4. Handstand Push-Up (HSPU)
@@ -69,3 +87,9 @@ autoregulation_rules:
 | 1 | Chest-to-Wall HSPU | 10 | 8.5 | Vertical spinal alignment & triceps press |
 | 2 | Wall-Assisted Deficit HSPU | 6 | 8.5 - 9.0 | Increased range of motion (ROM) |
 | 3 | Clean Freestanding HSPU | 5 | 9.0 | Pressing power with real-time balance micro-adjustments |
+
+### Supporting Strength Exercises
+* **Overhead Dumbbell / Barbell Press**: Heavy deltoid and triceps vertical pressing power.
+* **Pike Push-Up Deficit Shrugs**: Scapular elevation and trapezius strength at lockout.
+* **Wall-Supported Handstand Holds**: Overhead scapular stability and shoulder endurance.
+* **Triceps Overhead Extension**: Long-head triceps isolation to strengthen elbow extension.

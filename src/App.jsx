@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ToggleLeft, ToggleRight
 } from 'lucide-react';
 
 /* ============================================================================
@@ -106,6 +106,13 @@ export default function App() {
   const [activeRoutine, setActiveRoutine] = useState([]);
   const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' });
 
+  // Calisthenics HUD Timer & Mode State (Timer vs Stopwatch)
+  const [caliTimerMode, setCaliTimerMode] = useState('timer'); // 'timer' or 'stopwatch'
+  const [caliTimer, setCaliTimer] = useState({ active: false, seconds: 30, initialSeconds: 30, activeSkill: '' });
+
+  // Supporting Strength Exercises State (Fetched from calisthenics_progressions.md)
+  const [supportingExercises, setSupportingExercises] = useState({});
+
   // KaTeX Renderer Trigger
   useEffect(() => {
     if (activeTab === 'math' && window.renderMathInElement) {
@@ -122,7 +129,7 @@ export default function App() {
     }
   }, [activeTab, currentMathIndex, showSolution, mathLoading]);
 
-  // Calisthenics Tracks
+  // Calisthenics Tracks State
   const [caliTracks, setCaliTracks] = useState(() => {
     const saved = localStorage.getItem('shadow_cali_tracks_v1');
     if (saved) return JSON.parse(saved);
@@ -165,7 +172,39 @@ export default function App() {
     hspu: { performance: '', rpe: '8.5' }
   });
 
-  const [caliTimer, setCaliTimer] = useState({ active: false, secondsLeft: 30, total: 30 });
+  // --- Fetch Calisthenics Progressions & Supporting Exercises ---
+  useEffect(() => {
+    async function fetchCaliProgressions() {
+      try {
+        const response = await fetch('./calisthenics_progressions.md');
+        const text = await response.text();
+
+        const skillSections = text.split(/(?=##\s+\d+\.\s+)/g).filter(b => b.trim().length > 0);
+        const parsedSupporting = {};
+
+        skillSections.forEach(section => {
+          let skillKey = null;
+          if (section.includes('Planche')) skillKey = 'planche';
+          else if (section.includes('Front Lever')) skillKey = 'frontLever';
+          else if (section.includes('One-Arm Pull-Up')) skillKey = 'oneArmPullup';
+          else if (section.includes('Handstand Push-Up')) skillKey = 'hspu';
+
+          if (skillKey && section.includes('### Supporting Strength Exercises')) {
+            const supportIdx = section.indexOf('### Supporting Strength Exercises');
+            const sub = section.substring(supportIdx);
+            const lines = sub.split('\n').filter(l => l.trim().startsWith('*'));
+            const list = lines.map(l => l.replace(/^\*\s*/, '').trim());
+            parsedSupporting[skillKey] = list;
+          }
+        });
+
+        setSupportingExercises(parsedSupporting);
+      } catch (err) {
+        console.warn('Error reading calisthenics_progressions.md:', err);
+      }
+    }
+    fetchCaliProgressions();
+  }, []);
 
   // --- Fetch Mobility Markdown Library ---
   useEffect(() => {
@@ -422,21 +461,35 @@ export default function App() {
     });
   };
 
+  // --- Calisthenics Timer / Stopwatch Interval ---
   useEffect(() => {
     let interval = null;
-    if (caliTimer.active && caliTimer.secondsLeft > 0) {
+
+    if (caliTimer.active) {
       toggleWakeLock(true);
       interval = setInterval(() => {
-        setCaliTimer(prev => ({ ...prev, secondsLeft: prev.secondsLeft - 1 }));
+        setCaliTimer(prev => {
+          if (caliTimerMode === 'timer') {
+            if (prev.seconds <= 1) {
+              systemAudio.playSound('complete');
+              toggleWakeLock(false);
+              return { ...prev, seconds: 0, active: false };
+            }
+            return { ...prev, seconds: prev.seconds - 1 };
+          } else {
+            // Stopwatch mode: count up
+            return { ...prev, seconds: prev.seconds + 1 };
+          }
+        });
       }, 1000);
-    } else if (caliTimer.secondsLeft === 0 && caliTimer.active) {
-      systemAudio.playSound('complete');
-      setCaliTimer(prev => ({ ...prev, active: false }));
+    } else {
       toggleWakeLock(false);
     }
-    return () => clearInterval(interval);
-  }, [caliTimer.active, caliTimer.secondsLeft]);
 
+    return () => clearInterval(interval);
+  }, [caliTimer.active, caliTimerMode]);
+
+  // Mobility Timer Interval
   useEffect(() => {
     let interval = null;
     if (mobilityTimer.active && mobilityTimer.secondsLeft > 0) {
@@ -624,42 +677,63 @@ export default function App() {
         {/* CALISTHENICS HUB */}
         {activeTab === 'calisthenics' && (
           <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">CALISTHENICS HUB</h2>
+              <p className="text-xs text-slate-400 font-mono mt-1">Autoregulated RPE 8.5–9.0 edge coaching with interactive skill progression ladders & supporting strength exercises.</p>
+            </div>
+
+            {/* STICKY CALISTHENICS TIMER / STOPWATCH HUD */}
+            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">CALISTHENICS HUB</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">Autoregulated RPE 8.5–9.0 edge coaching with interactive skill progression ladders.</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
+                    {caliTimer.activeSkill ? `${caliTimer.activeSkill} Hold` : (caliTimerMode === 'timer' ? 'Active Countdown Timer' : 'Active Stopwatch')}
+                  </span>
+
+                  {/* Mode Toggle Switch */}
+                  <button
+                    onClick={() => {
+                      const newMode = caliTimerMode === 'timer' ? 'stopwatch' : 'timer';
+                      setCaliTimerMode(newMode);
+                      setCaliTimer({ active: false, seconds: newMode === 'timer' ? 30 : 0, initialSeconds: 30, activeSkill: '' });
+                    }}
+                    className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 hover:text-[#00E5FF] flex items-center gap-1"
+                  >
+                    {caliTimerMode === 'timer' ? 'Switch to Stopwatch' : 'Switch to Timer'}
+                  </button>
+                </div>
+
+                <div className="text-3xl md:text-5xl font-mono font-bold text-white tracking-wider">
+                  {String(Math.floor(caliTimer.seconds / 60)).padStart(2, '0')}:
+                  {String(caliTimer.seconds % 60).padStart(2, '0')}
+                </div>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-4">
-                <div>
-                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">Hold Timer</span>
-                  <div className="text-3xl font-mono font-bold text-white tracking-wider">
-                    {String(Math.floor(caliTimer.secondsLeft / 60)).padStart(2, '0')}:
-                    {String(caliTimer.secondsLeft % 60).padStart(2, '0')}
-                  </div>
-                </div>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => setCaliTimer(prev => ({ ...prev, active: !prev.active }))}
-                    className={`px-3 py-1.5 rounded font-mono text-xs font-bold transition ${
-                      caliTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
-                    }`}
-                  >
-                    {caliTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </button>
-                  <button
-                    onClick={() => setCaliTimer({ active: false, secondsLeft: 30, total: 30 })}
-                    className="px-2.5 py-1.5 bg-slate-800 text-slate-300 rounded font-mono text-xs"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCaliTimer(prev => ({ ...prev, active: !prev.active }))}
+                  className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
+                    caliTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
+                  }`}
+                >
+                  {caliTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {caliTimer.active ? 'PAUSE' : 'START'}
+                </button>
+                <button
+                  onClick={() => setCaliTimer({ active: false, seconds: caliTimerMode === 'timer' ? caliTimer.initialSeconds : 0, initialSeconds: caliTimer.initialSeconds, activeSkill: '' })}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
+            {/* SKILL PROGRESSION & SUPPORTING EXERCISES CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.entries(caliTracks).map(([skillKey, trackData]) => {
                 const currentStep = trackData.ladder[trackData.currentIndex];
+                const supportingList = supportingExercises[skillKey] || [];
+
                 return (
                   <div key={skillKey} className="p-5 rounded-lg border border-slate-800 bg-slate-900/60 flex flex-col justify-between gap-4">
                     <div>
@@ -673,6 +747,7 @@ export default function App() {
                         </span>
                       </div>
 
+                      {/* Progression Step Selector */}
                       <div className="mt-3 p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
                         <div className="flex items-center justify-between text-xs font-mono text-slate-400">
                           <span>Active Level:</span>
@@ -708,6 +783,23 @@ export default function App() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Supporting Strength Exercises Section */}
+                      {supportingList.length > 0 && (
+                        <div className="mt-3 p-3 bg-slate-950/80 rounded border border-slate-800/90 space-y-1.5">
+                          <span className="text-[10px] font-mono text-[#FFB100] uppercase tracking-wider block font-bold">
+                            Supporting Strength Exercises:
+                          </span>
+                          <ul className="space-y-1">
+                            {supportingList.map((item, idx) => (
+                              <li key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-1.5">
+                                <span className="text-[#00E5FF] font-bold">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3 pt-3 border-t border-slate-800">
@@ -734,27 +826,38 @@ export default function App() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => {
-                          const perf = caliInputs[skillKey]?.performance;
-                          const rpe = caliInputs[skillKey]?.rpe;
-                          if (!perf) return;
-                          systemAudio.playSound('complete');
-                          const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
-                          setCaliTracks(prev => ({
-                            ...prev,
-                            [skillKey]: {
-                              ...prev[skillKey],
-                              pr: `${perf} @ RPE ${rpe || '8.5'}`,
-                              history: [logStr, ...prev[skillKey].history]
-                            }
-                          }));
-                          setCaliInputs(prev => ({ ...prev, [skillKey]: { performance: '', rpe: '8.5' } }));
-                        }}
-                        className="w-full py-1.5 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
-                      >
-                        Log Set & Update PR
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            systemAudio.playSound('beep');
+                            setCaliTimer({ active: true, seconds: 30, initialSeconds: 30, activeSkill: trackData.name });
+                          }}
+                          className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] font-mono font-bold text-xs rounded border border-[#00E5FF]/30 transition flex items-center justify-center gap-1"
+                        >
+                          <Timer className="w-3.5 h-3.5" /> Start Hold Timer
+                        </button>
+                        <button
+                          onClick={() => {
+                            const perf = caliInputs[skillKey]?.performance;
+                            const rpe = caliInputs[skillKey]?.rpe;
+                            if (!perf) return;
+                            systemAudio.playSound('complete');
+                            const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
+                            setCaliTracks(prev => ({
+                              ...prev,
+                              [skillKey]: {
+                                ...prev[skillKey],
+                                pr: `${perf} @ RPE ${rpe || '8.5'}`,
+                                history: [logStr, ...prev[skillKey].history]
+                              }
+                            }));
+                            setCaliInputs(prev => ({ ...prev, [skillKey]: { performance: '', rpe: '8.5' } }));
+                          }}
+                          className="flex-1 py-1.5 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
+                        >
+                          Log Set & Update PR
+                        </button>
+                      </div>
 
                       {trackData.history.length > 0 && (
                         <div className="text-[11px] font-mono text-slate-400 space-y-1 pt-1">
@@ -854,7 +957,7 @@ export default function App() {
               </p>
             </div>
 
-            {/* STICKY ACTIVE TIMER HUD (RESPONSIVE TOP OFFSET FOR MOBILE VS DESKTOP) */}
+            {/* STICKY ACTIVE TIMER HUD */}
             <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
