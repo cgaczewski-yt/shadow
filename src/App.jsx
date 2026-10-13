@@ -110,7 +110,9 @@ export default function App() {
     chest: true, back: true, triceps: true, bicep: true, legs: true, core: true
   });
   const [gymSearchQuery, setGymSearchQuery] = useState('');
+  const [gymExerciseLimit, setGymExerciseLimit] = useState(12); // Default count of exercises to display
   const [gymStopwatch, setGymStopwatch] = useState({ active: false, seconds: 0, activeExercise: '' });
+  const [gymRestTimer, setGymRestTimer] = useState({ active: false, secondsLeft: 0, total: 60 });
 
   // Gym Set & PR Logs State
   const [gymLogs, setGymLogs] = useState(() => {
@@ -228,7 +230,6 @@ export default function App() {
       const equipList = Array.from(uniqueEquipSet).sort();
       setAvailableEquipmentList(equipList);
 
-      // Default all discovered equipment items to checked
       const initialMap = {};
       equipList.forEach(eq => {
         initialMap[eq] = true;
@@ -239,11 +240,9 @@ export default function App() {
     fetchGymData();
   }, []);
 
-  // --- Filtered Gym Exercises (Body Parts, Auto-Equipment Checkboxes, Search) ---
+  // --- Filtered & Limited Gym Exercises ---
   const filteredGymExercises = gymLibrary.filter(ex => {
     const matchesPart = !!gymSelectedParts[ex.bodyPart];
-
-    // Check if at least one piece of equipment required by exercise is checked off
     const exEquipList = ex.equipment.split(',').map(e => e.trim());
     const matchesEquip = exEquipList.some(eq => !!selectedEquipmentMap[eq]);
 
@@ -256,6 +255,10 @@ export default function App() {
     return matchesPart && matchesEquip && matchesSearch;
   });
 
+  const displayedGymExercises = gymExerciseLimit === 'ALL'
+    ? filteredGymExercises
+    : filteredGymExercises.slice(0, gymExerciseLimit);
+
   // Toggle All Equipment Checkboxes
   const handleToggleAllEquipment = (enableAll) => {
     const updated = {};
@@ -265,34 +268,42 @@ export default function App() {
     setSelectedEquipmentMap(updated);
   };
 
-  // --- Gym PR / Set Logging Handler ---
+  // --- Gym PR / Set Logging Handler with Auto Rest Timer ---
   const handleLogGymSet = (exerciseName) => {
     const inputs = gymLogInputs[exerciseName] || {};
     const weight = inputs.weight || '';
     const reps = inputs.reps || '';
+    const seconds = inputs.seconds || '';
 
-    if (!weight && !reps) return;
+    if (!weight && !reps && !seconds) return;
 
     systemAudio.playSound('complete');
 
+    // Trigger Automatic 60s Rest Timer
+    setGymRestTimer({ active: true, secondsLeft: 60, total: 60 });
+
     const logEntry = {
       date: todayStr,
-      weight: weight ? `${weight} lbs` : 'Bodyweight',
-      reps: reps ? `${reps} reps` : '0 reps',
+      summary: seconds ? `${seconds}s hold` : `${weight ? `${weight} lbs` : 'Bodyweight'} × ${reps ? `${reps} reps` : '0 reps'}`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setGymLogs(prev => {
       const existing = prev[exerciseName] || { pr: 'None', history: [] };
 
-      const currentWeightNum = parseFloat(weight) || 0;
-      const existingWeightNum = parseFloat(existing.pr.replace(/[^0-9.]/g, '')) || 0;
-
       let newPr = existing.pr;
-      if (currentWeightNum >= existingWeightNum) {
-        newPr = `${weight} lbs x ${reps} reps`;
-      } else if (existing.pr === 'None') {
-        newPr = `${weight} lbs x ${reps} reps`;
+      if (seconds) {
+        const currSecNum = parseInt(seconds, 10) || 0;
+        const prevSecNum = parseInt(existing.pr.replace(/[^0-9]/g, '')) || 0;
+        if (currSecNum >= prevSecNum || existing.pr === 'None') {
+          newPr = `${seconds}s hold`;
+        }
+      } else {
+        const currentWeightNum = parseFloat(weight) || 0;
+        const existingWeightNum = parseFloat(existing.pr.replace(/[^0-9.]/g, '')) || 0;
+        if (currentWeightNum >= existingWeightNum || existing.pr === 'None') {
+          newPr = `${weight} lbs × ${reps} reps`;
+        }
       }
 
       return {
@@ -306,9 +317,23 @@ export default function App() {
 
     setGymLogInputs(prev => ({
       ...prev,
-      [exerciseName]: { weight: '', reps: '' }
+      [exerciseName]: { weight: '', reps: '', seconds: '' }
     }));
   };
+
+  // --- Rest Timer Countdown Interval ---
+  useEffect(() => {
+    let interval = null;
+    if (gymRestTimer.active && gymRestTimer.secondsLeft > 0) {
+      interval = setInterval(() => {
+        setGymRestTimer(prev => ({ ...prev, secondsLeft: prev.secondsLeft - 1 }));
+      }, 1000);
+    } else if (gymRestTimer.secondsLeft === 0 && gymRestTimer.active) {
+      systemAudio.playSound('complete');
+      setGymRestTimer(prev => ({ ...prev, active: false }));
+    }
+    return () => clearInterval(interval);
+  }, [gymRestTimer.active, gymRestTimer.secondsLeft]);
 
   // --- Fetch Mobility Markdown Library ---
   useEffect(() => {
@@ -345,43 +370,12 @@ export default function App() {
         }).filter(Boolean);
 
         setMobilityLibrary(parsed);
-        generateRoutine(parsed, { neck: true, upper_back: true, lower_back: true, legs: true, arms: true }, 12);
       } catch (err) {
         console.warn('Error reading daily_mobility.md:', err);
       }
     }
     fetchMobilityData();
   }, []);
-
-  const generateRoutine = (library = mobilityLibrary, activeParts = selectedBodyParts, targetMinutes = targetDurationMinutes) => {
-    const enabledTags = Object.keys(activeParts).filter(k => activeParts[k]);
-    if (enabledTags.length === 0 || library.length === 0) {
-      setActiveRoutine([]);
-      return;
-    }
-
-    const matchingPool = library.filter(s => enabledTags.includes(s.bodyPart));
-    if (matchingPool.length === 0) {
-      setActiveRoutine([]);
-      return;
-    }
-
-    const targetSec = targetMinutes * 60;
-    let selected = [];
-    let currentSec = 0;
-
-    const shuffled = [...matchingPool].sort(() => 0.5 - Math.random());
-
-    let i = 0;
-    while (currentSec < targetSec && selected.length < 12) {
-      const item = shuffled[i % shuffled.length];
-      selected.push(item);
-      currentSec += item.timeInSeconds;
-      i++;
-    }
-
-    setActiveRoutine(selected);
-  };
 
   // --- Gym Stopwatch Interval Effect ---
   useEffect(() => {
@@ -675,22 +669,43 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GYM EXERCISES & WORKOUTS</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, and track working sets and personal records for resistance exercises.</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, and track working sets, hold times, and personal records across your 300+ exercise library.</p>
             </div>
 
-            {/* STICKY GYM STOPWATCH HUD */}
-            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
-                  {gymStopwatch.activeExercise ? `${gymStopwatch.activeExercise}` : 'Gym Session Stopwatch'}
-                </span>
-                <div className="text-3xl md:text-5xl font-mono font-bold text-white tracking-wider">
-                  {String(Math.floor(gymStopwatch.seconds / 60)).padStart(2, '0')}:
-                  {String(gymStopwatch.seconds % 60).padStart(2, '0')}
+            {/* STICKY GYM STOPWATCH & AUTOMATIC REST TIMER HUD */}
+            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-start">
+                <div>
+                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
+                    {gymStopwatch.activeExercise ? `${gymStopwatch.activeExercise}` : 'Gym Session Stopwatch'}
+                  </span>
+                  <div className="text-3xl md:text-4xl font-mono font-bold text-white tracking-wider">
+                    {String(Math.floor(gymStopwatch.seconds / 60)).padStart(2, '0')}:
+                    {String(gymStopwatch.seconds % 60).padStart(2, '0')}
+                  </div>
                 </div>
+
+                {/* Automatic Rest Timer Countdown Badge */}
+                {gymRestTimer.active && (
+                  <div className="px-3 py-1.5 bg-amber-950/40 border border-amber-500/50 rounded flex items-center gap-2 animate-pulse">
+                    <Timer className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <span className="text-[9px] font-mono text-amber-400 uppercase block">Rest Timer Active</span>
+                      <span className="text-sm font-mono font-bold text-amber-300">
+                        00:{String(gymRestTimer.secondsLeft).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setGymRestTimer({ active: false, secondsLeft: 0, total: 60 })}
+                      className="text-[10px] font-mono text-slate-400 hover:text-white ml-2 underline"
+                    >
+                      Skip
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                 <button
                   onClick={() => setGymStopwatch(prev => ({ ...prev, active: !prev.active }))}
                   className={`px-5 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
@@ -698,7 +713,7 @@ export default function App() {
                   }`}
                 >
                   {gymStopwatch.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  {gymStopwatch.active ? 'PAUSE' : 'START TIMER'}
+                  {gymStopwatch.active ? 'PAUSE TIMER' : 'START TIMER'}
                 </button>
                 <button
                   onClick={() => setGymStopwatch({ active: false, seconds: 0, activeExercise: '' })}
@@ -709,22 +724,42 @@ export default function App() {
               </div>
             </div>
 
-            {/* FILTER & SEARCH CONTROLS */}
+            {/* FILTER, SEARCH & EXERCISE LIMIT CONTROLS */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-5">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
                 <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
                   <Sliders className="w-4 h-4" /> Body Part Selection
                 </span>
 
-                <div className="relative flex items-center">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Search exercises..."
-                    value={gymSearchQuery}
-                    onChange={(e) => setGymSearchQuery(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF] w-full md:w-64"
-                  />
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Exercise Count Limit Selector */}
+                  <div className="flex items-center gap-1.5 font-mono text-xs text-slate-300">
+                    <span className="text-slate-400"># of Exercises:</span>
+                    <select
+                      value={gymExerciseLimit}
+                      onChange={(e) => setGymExerciseLimit(e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value, 10))}
+                      className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-[#00E5FF] focus:outline-none focus:border-[#00E5FF]"
+                    >
+                      <option value="5">5</option>
+                      <option value="8">8</option>
+                      <option value="12">12</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                      <option value="ALL">All ({filteredGymExercises.length})</option>
+                    </select>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className="relative flex items-center">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Search exercises..."
+                      value={gymSearchQuery}
+                      onChange={(e) => setGymSearchQuery(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF] w-48"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -799,7 +834,7 @@ export default function App() {
               </div>
 
               <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
-                <span>Showing <span className="text-white font-bold">{filteredGymExercises.length} Exercises</span></span>
+                <span>Displaying <span className="text-white font-bold">{displayedGymExercises.length}</span> of {filteredGymExercises.length} matching exercises</span>
                 {gymSearchQuery && (
                   <button onClick={() => setGymSearchQuery('')} className="text-[#00E5FF] hover:underline">
                     Clear Search
@@ -808,12 +843,12 @@ export default function App() {
               </div>
             </div>
 
-            {/* EXERCISE CARDS GRID WITH WEIGHT/REP LOGGING */}
+            {/* EXERCISE CARDS GRID WITH WEIGHT, REP & SECONDS LOGGING */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredGymExercises.length > 0 ? (
-                filteredGymExercises.map((ex, i) => {
+              {displayedGymExercises.length > 0 ? (
+                displayedGymExercises.map((ex, i) => {
                   const logData = gymLogs[ex.name] || { pr: 'None', history: [] };
-                  const inputs = gymLogInputs[ex.name] || { weight: '', reps: '' };
+                  const inputs = gymLogInputs[ex.name] || { weight: '', reps: '', seconds: '' };
 
                   return (
                     <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-4">
@@ -845,14 +880,14 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* WEIGHT & REP INPUT SECTION */}
+                      {/* WEIGHT, REP & SECONDS INPUT SECTION */}
                       <div className="space-y-3 pt-3 border-t border-slate-800">
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           <div>
-                            <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase">Weight (lbs)</label>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase">Wt (lbs)</label>
                             <input
                               type="number"
-                              placeholder="e.g. 185"
+                              placeholder="185"
                               value={inputs.weight || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -861,7 +896,7 @@ export default function App() {
                                   [ex.name]: { ...(prev[ex.name] || {}), weight: val }
                                 }));
                               }}
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-[#00E5FF]"
                             />
                           </div>
 
@@ -869,7 +904,7 @@ export default function App() {
                             <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase">Reps</label>
                             <input
                               type="number"
-                              placeholder="e.g. 8"
+                              placeholder="8"
                               value={inputs.reps || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -878,7 +913,24 @@ export default function App() {
                                   [ex.name]: { ...(prev[ex.name] || {}), reps: val }
                                 }));
                               }}
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-[#00E5FF]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase">Sec (Hold)</label>
+                            <input
+                              type="number"
+                              placeholder="30s"
+                              value={inputs.seconds || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setGymLogInputs(prev => ({
+                                  ...prev,
+                                  [ex.name]: { ...(prev[ex.name] || {}), seconds: val }
+                                }));
+                              }}
+                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-[#00E5FF]"
                             />
                           </div>
                         </div>
@@ -891,14 +943,14 @@ export default function App() {
                             }}
                             className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] rounded font-mono text-xs font-bold transition flex items-center justify-center gap-1.5 border border-[#00E5FF]/20"
                           >
-                            <Timer className="w-3.5 h-3.5" /> Rest Timer
+                            <Timer className="w-3.5 h-3.5" /> Stopwatch
                           </button>
 
                           <button
                             onClick={() => handleLogGymSet(ex.name)}
                             className="flex-1 py-2 bg-[#00E5FF] hover:bg-[#00E5FF]/85 text-black rounded font-mono text-xs font-bold transition flex items-center justify-center gap-1"
                           >
-                            Log Set & PR
+                            Log Set & Rest
                           </button>
                         </div>
 
@@ -908,7 +960,7 @@ export default function App() {
                             <span className="text-[10px] font-mono text-slate-500 uppercase font-bold block">Recent Sets:</span>
                             {logData.history.slice(0, 3).map((entry, idx) => (
                               <div key={idx} className="text-[11px] font-mono text-slate-300 flex items-center justify-between bg-slate-950/60 px-2 py-1 rounded">
-                                <span className="text-[#00E5FF]">{entry.weight} × {entry.reps}</span>
+                                <span className="text-[#00E5FF]">{entry.summary}</span>
                                 <span className="text-slate-500 text-[10px]">{entry.date} at {entry.timestamp}</span>
                               </div>
                             ))}
@@ -1142,11 +1194,8 @@ export default function App() {
         {/* MATH & LOGIC */}
         {activeTab === 'math' && (
           <div id="math-quest-container" className="space-y-6 max-w-4xl mx-auto">
-            <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your repository.</p>
-              </div>
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
             </div>
           </div>
         )}
