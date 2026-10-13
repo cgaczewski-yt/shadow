@@ -110,6 +110,7 @@ export default function App() {
   const [caliTimerMode, setCaliTimerMode] = useState('timer'); // 'timer' or 'stopwatch'
   const [caliTimer, setCaliTimer] = useState({ active: false, seconds: 30, initialSeconds: 30, activeSkill: '' });
   const [manualInputSec, setManualInputSec] = useState('30');
+  const [selectedCaliSkill, setSelectedCaliSkill] = useState('planche');
 
   // Supporting Strength Exercises & Expansion State
   const [supportingExercises, setSupportingExercises] = useState({
@@ -125,6 +126,18 @@ export default function App() {
       "Weighted Inverted Rows: Mid-back and posterior deltoid hypertrophy under heavy horizontal load.",
       "Hanging Leg Raises / L-Sits: Hip flexor compression and lower abdominal strength."
     ],
+    backLever: [
+      "German Hangs: Bicep tendon and shoulder anterior capsule loaded flexibility.",
+      "Skin the Cat: Active shoulder girdle rotation under load.",
+      "Scapular Pull-Ups: Lat activation and active hang strength.",
+      "Reverse Hyperextensions: Lower back and glute posterior chain endurance."
+    ],
+    humanFlag: [
+      "Side Plank Hip Abduction: Oblique and lateral core stabilizer endurance.",
+      "Vertical Flag Negatives: Unilateral shoulder adduction eccentric control.",
+      "Dumbbell Side Bends: Oblique hypertrophy and spinal lateral flexion strength.",
+      "Windshield Wipers: Core rotational torque and anti-rotation stability."
+    ],
     oneArmPullup: [
       "One-Arm Lockoffs (90° & Top): Isometric bicep and brachialis strength at the sticking point.",
       "Weighted Pull-Ups: Heavy bilateral lat strength foundation to build raw pulling capacity.",
@@ -136,14 +149,149 @@ export default function App() {
       "Pike Push-Up Deficit Shrugs: Scapular elevation and trapezius strength at lockout.",
       "Wall-Supported Handstand Holds: Overhead scapular stability and shoulder endurance.",
       "Triceps Overhead Extension: Long-head triceps isolation to strengthen elbow extension."
+    ],
+    muscleUp: [
+      "Explosive Chest-to-Bar Pull-Ups: High pull power and transition velocity.",
+      "Straight-Bar Dips: Transition and pushout strength endurance.",
+      "Jumping Ring Muscle-Ups: Practicing the fluid turnover trajectory under reduced load.",
+      "L-Sit Pull-Ups: Core tension during vertical pulling mechanics."
+    ],
+    ironCross: [
+      "Ring Turn-Out Support Holds: Pectoral and rotator cuff stabilizer strength.",
+      "Cross Pull-Downs with Bands: Isolating the adductor torque required for the cross.",
+      "Rings Bulgarian Dips: Deep chest and triceps ring pressing power.",
+      "Weighted Ring Push-Ups: Pectoral and serratus pressing foundation."
+    ],
+    maltese: [
+      "Wide-Arm Planche Leans: Anterior deltoid lateral torque conditioning.",
+      "Incline Maltese Band Pulls: Scaled horizontal abduction strength.",
+      "Weighted Dips with Forward Lean: Lower pectoral and shoulder girdle strength.",
+      "Straight-Arm Cable Flyes: Isolated pectoral tension throughout the range of motion."
+    ],
+    vSit: [
+      "Pike Compression Lifts: Hip flexor and rectus abdominis shortening strength.",
+      "L-Sit Flutter Kicks: Lower abdominal endurance under static hip flexion.",
+      "Parallette Press-Ups: Deep compression pressing power.",
+      "Seated Leg Lifts over Objects: Active hip flexor height and control."
+    ],
+    lSitPress: [
+      "Puck Lifts in L-Sit: Triceps and compression separation strength.",
+      "Straddle Compression Pulses: Inner thigh and hip flexor active flexibility.",
+      "Wall-Supported Press Negatives: Controlled eccentric lowering from handstand to L-sit.",
+      "Pike Push-Ups: Overhead and shoulder pressing strength."
+    ],
+    frontLeverRow: [
+      "Weighted Inverted Rows: Heavy mid-back and rhomboid loading.",
+      "Tuck Front Lever Pulls: Dynamic latissimus engagement.",
+      "Straight-Arm Pullovers: Lat and serratus dynamic power.",
+      "Barbell Pendlay Rows: Raw explosive pulling power."
+    ],
+    planchePushup: [
+      "Pseudo Planche Push-Ups: Bent-arm pushing mechanics with forward lean.",
+      "Decline Push-Ups: Upper chest and anterior deltoid overload.",
+      "Hollow Body Push-Ups: Core rigidity during pressing.",
+      "Triceps Diamond Push-Ups: Elbow extension strength."
+    ],
+    archerPullup: [
+      "Unilateral Side-to-Side Pull-Ups: Shifting load dynamically across the upper body.",
+      "Assisted One-Arm Negatives: Eccentric unilateral pulling strength.",
+      "Wide Grip Pull-Ups: Lat width and upper back recruitment.",
+      "Bicep Concentration Curls: Elbow flexor isolation."
+    ],
+    pistolSquat: [
+      "Box Pistol Squats: Depth and knee tracking control.",
+      "Cossack Squats: Lateral leg mobility and unilateral ankle stability.",
+      "Bulgarian Split Squats: Single-leg quad and glute hypertrophy.",
+      "Calf Raises: Ankle plantarflexion strength."
+    ],
+    nordicCurl: [
+      "Romanian Deadlifts: Hamstring posterior chain loading.",
+      "Glute-Ham Raises: Knee flexion strength and hip extension integration.",
+      "Swiss Ball Hamstring Curls: High-rep hamstring endurance.",
+      "Good Mornings: Erector spinae and hip hinge strength."
+    ],
+    dragonFlag: [
+      "Hanging Leg Raises: Lower abdominal compression.",
+      "Reverse Crunches on Incline: Lower spine articulation and core strength.",
+      "Plank Body Saws: Anti-extension core stability.",
+      "Hollow Body Holds: Isometric core endurance."
+    ],
+    frontLeverRaise: [
+      "Straight-Arm Scapular Pulls: Lat depressor strength.",
+      "Inverted Hang Pull-Overs: Full range lat and teres major conditioning.",
+      "Weighted Pull-Ups: Raw pulling strength.",
+      "Chest-to-Bar Pull-Ups: Upper back peak contraction."
+    ],
+    ringDips: [
+      "Weighted Dips: Chest and triceps pressing foundation.",
+      "Ring Support Holds: Scapular depression and elbow lockout stability.",
+      "Bulgarian Ring Push-Ups: Pectoral stabilization.",
+      "Triceps Pushdowns: Isolation strength."
+    ],
+    freestandingHS: [
+      "Wall Handstand Shoulder Shrugs: Trapezius and serratus elevation.",
+      "Bail-Out Cartwheel Practice: Safety and spatial awareness.",
+      "Crow Pose / Frog Stand: Balance and wrist conditioning.",
+      "Plank to Pike Transitions: Shoulder mobility and core integration."
+    ],
+    oneArmPushup: [
+      "Archer Push-Ups: Unilateral pressing bias.",
+      "Decline One-Arm Push-Ups: Increased pressing load.",
+      "Weighted Push-Ups: Pectoral and triceps overload.",
+      "Plank Shoulder Taps: Anti-rotation core stability."
+    ],
+    deg90HSPU: [
+      "Freestanding HSPU Negatives: Controlled eccentric vertical descent.",
+      "Weighted Pike Push-Ups: Overload vertical pressing.",
+      "Press to Handstand: Transition strength from floor to vertical.",
+      "Handstand Pirouettes: Overhead balance adjustments."
+    ],
+    ringRollouts: [
+      "Ab Wheel Rollouts: Anti-extension core overload.",
+      "Long-Lever Planks: Deep transverse abdominis engagement.",
+      "Hanging Windshield Wipers: Oblique rotational strength.",
+      "Dead Bugs: Core coordination and stability."
+    ],
+    frontLeverPulls: [
+      "Weighted Inverted Rows: Mid-back pulling power.",
+      "Chest-to-Bar Pull-Ups: Upper range of motion pulling.",
+      "Straight-Arm Lat Pulldowns: Latissimus dorsi isolation.",
+      "Face Pulls: Rear delt and external rotator health."
+    ],
+    declinePikeHSPU: [
+      "Elevated Feet Pike Push-Ups: High-angle shoulder pressing.",
+      "Dumbbell Z-Press: Sitting overhead pressing with zero leg drive.",
+      "Wall Handstand Push-Ups: Full vertical range of motion.",
+      "Lateral Raises: Deltoid hypertrophy."
     ]
   });
 
   const [expandedSupporting, setExpandedSupporting] = useState({
     planche: false,
     frontLever: false,
+    backLever: false,
+    humanFlag: false,
     oneArmPullup: false,
-    hspu: false
+    hspu: false,
+    muscleUp: false,
+    ironCross: false,
+    maltese: false,
+    vSit: false,
+    lSitPress: false,
+    frontLeverRow: false,
+    planchePushup: false,
+    archerPullup: false,
+    pistolSquat: false,
+    nordicCurl: false,
+    dragonFlag: false,
+    frontLeverRaise: false,
+    ringDips: false,
+    freestandingHS: false,
+    oneArmPushup: false,
+    deg90HSPU: false,
+    ringRollouts: false,
+    frontLeverPulls: false,
+    declinePikeHSPU: false
   });
 
   // KaTeX Renderer Trigger
@@ -162,88 +310,43 @@ export default function App() {
     }
   }, [activeTab, currentMathIndex, showSolution, mathLoading]);
 
-  // Calisthenics Tracks State
+  // Calisthenics Tracks State (All 25 Skills)
   const [caliTracks, setCaliTracks] = useState(() => {
-    const saved = localStorage.getItem('shadow_cali_tracks_v1');
+    const saved = localStorage.getItem('shadow_cali_tracks_v2');
     if (saved) return JSON.parse(saved);
     return {
-      planche: {
-        name: 'Planche Progression',
-        ladder: ['Frog Stand', 'Tuck Planche', 'Advanced Tuck Planche', 'Straddle Planche', 'Full Planche'],
-        currentIndex: 1,
-        pr: '10s @ RPE 8.5',
-        history: []
-      },
-      frontLever: {
-        name: 'Front Lever Progression',
-        ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'],
-        currentIndex: 1,
-        pr: '12s @ RPE 9.0',
-        history: []
-      },
-      oneArmPullup: {
-        name: 'One-Arm Pull-Up',
-        ladder: ['Archer Pull-Ups', 'Assisted 1APU (Band)', 'Eccentric 1APU Lockoffs', 'Full One-Arm Pull-Up'],
-        currentIndex: 1,
-        pr: '2 reps @ RPE 8.5',
-        history: []
-      },
-      hspu: {
-        name: 'Handstand Push-Up',
-        ladder: ['Pike Push-Ups', 'Wall-Supported HSPU', 'Deficit Wall HSPU', 'Freestanding HSPU'],
-        currentIndex: 1,
-        pr: '5 reps @ RPE 9.0',
-        history: []
-      }
+      planche: { name: 'Planche Progression', category: 'Push / Isometrics', ladder: ['Frog Stand', 'Tuck Planche', 'Advanced Tuck Planche', 'Straddle Planche', 'Full Planche'], currentIndex: 1, pr: '10s @ RPE 8.5', history: [] },
+      frontLever: { name: 'Front Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'], currentIndex: 1, pr: '12s @ RPE 9.0', history: [] },
+      backLever: { name: 'Back Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Back Lever', 'Advanced Tuck Back Lever', 'Straddle Back Lever', 'Full Back Lever'], currentIndex: 1, pr: '15s @ RPE 8.0', history: [] },
+      humanFlag: { name: 'Human Flag Progression', category: 'Lateral Core / Isometrics', ladder: ['Vertical Flag Hold', 'Tuck Human Flag', 'Straddle Human Flag', 'Full Human Flag'], currentIndex: 1, pr: '8s @ RPE 9.0', history: [] },
+      oneArmPullup: { name: 'One-Arm Pull-Up', category: 'Pull / Unilateral', ladder: ['Archer Pull-Ups', 'Assisted 1APU (Band)', 'Eccentric 1APU Lockoffs', 'Full One-Arm Pull-Up'], currentIndex: 1, pr: '2 reps @ RPE 8.5', history: [] },
+      hspu: { name: 'Handstand Push-Up', category: 'Push / Vertical', ladder: ['Pike Push-Ups', 'Wall-Supported HSPU', 'Deficit Wall HSPU', 'Freestanding HSPU'], currentIndex: 1, pr: '5 reps @ RPE 9.0', history: [] },
+      muscleUp: { name: 'Muscle-Up (Bar/Ring)', category: 'Explosive / Transition', ladder: ['High Chest Pull-ups', 'Jumping Muscle-Ups', 'Strict Bar Muscle-Up', 'Strict Ring Muscle-Up'], currentIndex: 2, pr: '3 reps @ RPE 8.0', history: [] },
+      ironCross: { name: 'Iron Cross (Rings)', category: 'Rings / Isometrics', ladder: ['Cross Band Pulls', 'Cross Lockoffs (Feet Down)', 'Cross Negatives', 'Full Iron Cross'], currentIndex: 0, pr: '5s @ RPE 9.5', history: [] },
+      maltese: { name: 'Maltese Cross', category: 'Rings / Isometrics', ladder: ['Incline Maltese Hold', 'Floor Maltese Press', 'Maltese Negatives', 'Full Maltese'], currentIndex: 0, pr: '3s @ RPE 9.5', history: [] },
+      vSit: { name: 'V-Sit / Manna', category: 'Compression / Core', ladder: ['Tuck L-Sit', 'Full L-Sit', 'V-Sit (45 deg)', 'Manna Progression'], currentIndex: 1, pr: '12s @ RPE 8.0', history: [] },
+      lSitPress: { name: 'Press to Handstand', category: 'Balance / Compression', ladder: ['Puck Press Negatives', 'Straddle Press from Floor', 'L-Sit Press to Handstand', 'Stallion Press'], currentIndex: 0, pr: '1 rep @ RPE 9.0', history: [] },
+      frontLeverRow: { name: 'Front Lever Touch Rows', category: 'Pull / Hypertrophy', ladder: ['Tuck FL Rows', 'Adv Tuck FL Rows', 'Straddle FL Touch Rows', 'Full FL Touch Rows'], currentIndex: 1, pr: '6 reps @ RPE 8.5', history: [] },
+      planchePushup: { name: 'Planche Push-Ups', category: 'Push / Hypertrophy', ladder: ['Planche Lean Push-ups', 'Tuck Planche Push-ups', 'Adv Tuck Planche Push-ups', 'Straddle Planche Push-ups'], currentIndex: 0, pr: '8 reps @ RPE 8.5', history: [] },
+      archerPullup: { name: 'Archer Pull-Ups & Push-Ups', category: 'Unilateral Strength', ladder: ['Assisted Archer Pulls', 'Strict Archer Pull-Ups', 'Weighted Archer Pull-Ups', 'One-Arm Archer'], currentIndex: 1, pr: '8 reps @ RPE 8.0', history: [] },
+      pistolSquat: { name: 'Pistol Squat Progression', category: 'Legs / Unilateral', ladder: ['Box Pistol Squats', 'Counterbalance Pistols', 'Full Pistol Squats', 'Weighted Pistol Squats'], currentIndex: 2, pr: '10 reps @ RPE 8.0', history: [] },
+      nordicCurl: { name: 'Nordic Hamstring Curl', category: 'Legs / Posterior Chain', ladder: ['Band-Assisted Nordics', 'Eccentric Nordics (5s)', 'Full Nordic Curls', 'Weighted Nordics'], currentIndex: 1, pr: '5 reps @ RPE 9.0', history: [] },
+      dragonFlag: { name: 'Dragon Flag', category: 'Core / Posterior Chain', ladder: ['Tuck Dragon Flag', 'Straddle Dragon Flag', 'Full Straight Dragon Flag', 'Weighted Dragon Flag'], currentIndex: 1, pr: '8 reps @ RPE 8.5', history: [] },
+      frontLeverRaise: { name: 'Front Lever Raises (Bevels)', category: 'Pull / Dynamic', ladder: ['Tuck FL Raises', 'Adv Tuck FL Raises', 'Straddle FL Raises', 'Full FL Raises'], currentIndex: 0, pr: '4 reps @ RPE 9.0', history: [] },
+      ringDips: { name: 'Ring Dips (Strict & Weighted)', category: 'Push / Dips', ladder: ['Support Hold (Rings)', 'Strict Ring Dips', 'Deep Ring Dips', 'Weighted Ring Dips'], currentIndex: 1, pr: '12 reps @ RPE 8.0', history: [] },
+      freestandingHS: { name: 'Freestanding Handstand', category: 'Balance / Skill', ladder: ['Chest-to-Wall Hold', 'Kick-up Balance Drills', 'Freestanding Hold (30s)', 'Handstand Walk'], currentIndex: 1, pr: '25s @ RPE 8.0', history: [] },
+      oneArmPushup: { name: 'One-Arm Push-Up', category: 'Push / Unilateral', ladder: ['Elevated OAPU', 'Floor OAPU (Feet Wide)', 'Strict OAPU (Feet Together)', 'Deficit OAPU'], currentIndex: 1, pr: '10 reps @ RPE 8.0', history: [] },
+      deg90HSPU: { name: '90-Degree Handstand Push-Up', category: 'Push / Advanced', ladder: ['Pike 90-Deg Press', 'Wall 90-Deg HSPU', 'Negative 90-Deg HSPU', 'Full 90-Deg HSPU'], currentIndex: 0, pr: '2 reps @ RPE 9.5', history: [] },
+      ringRollouts: { name: 'Ring Ab Rollouts', category: 'Core / Anti-Extension', ladder: ['Incline Ring Rollouts', 'Floor Kneeling Rollouts', 'Standing Rollouts (Knees)', 'Full Standing Ring Rollouts'], currentIndex: 1, pr: '10 reps @ RPE 8.5', history: [] },
+      frontLeverPulls: { name: 'Front Lever Pulls', category: 'Pull / Power', ladder: ['Inverted Pulls', 'Tuck FL Pulls', 'Adv Tuck FL Pulls', 'Full FL Pulls'], currentIndex: 1, pr: '8 reps @ RPE 8.5', history: [] },
+      declinePikeHSPU: { name: 'Decline Pike HSPU', category: 'Push / Vertical', ladder: ['Pike Push-ups', 'Elevated Feet Pike', 'Box HSPU', 'Decline Deficit HSPU'], currentIndex: 1, pr: '8 reps @ RPE 8.5', history: [] }
     };
   });
 
   const [caliInputs, setCaliInputs] = useState({
-    planche: { performance: '', rpe: '8.5' },
-    frontLever: { performance: '', rpe: '8.5' },
-    oneArmPullup: { performance: '', rpe: '8.5' },
-    hspu: { performance: '', rpe: '8.5' }
+    performance: '',
+    rpe: '8.5'
   });
-
-  // --- Fetch Calisthenics Progressions & Supporting Exercises ---
-  useEffect(() => {
-    async function fetchCaliProgressions() {
-      try {
-        const baseUrl = import.meta.env.BASE_URL || './';
-        const response = await fetch(`${baseUrl}calisthenics_progressions.md`);
-        if (!response.ok) return;
-        const text = await response.text();
-
-        const skillSections = text.split(/(?=##\s+\d+\.\s+)/g).filter(b => b.trim().length > 0);
-        const parsedSupporting = {};
-
-        skillSections.forEach(section => {
-          let skillKey = null;
-          if (/Planche/i.test(section)) skillKey = 'planche';
-          else if (/Front Lever/i.test(section)) skillKey = 'frontLever';
-          else if (/One-Arm Pull-Up|OAP/i.test(section)) skillKey = 'oneArmPullup';
-          else if (/Handstand Push-Up|HSPU/i.test(section)) skillKey = 'hspu';
-
-          if (skillKey && section.includes('### Supporting Strength Exercises')) {
-            const supportIdx = section.indexOf('### Supporting Strength Exercises');
-            const sub = section.substring(supportIdx);
-            const lines = sub.split('\n').filter(l => l.trim().startsWith('*'));
-            const list = lines.map(l => l.replace(/^\*\s*/, '').trim());
-            if (list.length > 0) {
-              parsedSupporting[skillKey] = list;
-            }
-          }
-        });
-
-        if (Object.keys(parsedSupporting).length > 0) {
-          setSupportingExercises(prev => ({ ...prev, ...parsedSupporting }));
-        }
-      } catch (err) {
-        console.warn('Error reading calisthenics_progressions.md:', err);
-      }
-    }
-    fetchCaliProgressions();
-  }, []);
 
   // --- Fetch Mobility Markdown Library ---
   useEffect(() => {
@@ -446,7 +549,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('shadow_pillars_v1', JSON.stringify(pillars));
-    localStorage.setItem('shadow_cali_tracks_v1', JSON.stringify(caliTracks));
+    localStorage.setItem('shadow_cali_tracks_v2', JSON.stringify(caliTracks));
 
     const pendingCount = Object.values(pillars).filter(p => !p.completedToday).length;
     if ('setAppBadge' in navigator) {
@@ -549,6 +652,10 @@ export default function App() {
 
   const pendingCount = Object.values(pillars).filter(p => !p.completedToday).length;
   const currentProblem = mathProblems[currentMathIndex];
+  const activeTrack = caliTracks[selectedCaliSkill];
+  const activeSupporting = supportingExercises[selectedCaliSkill] || [];
+  const isExpanded = expandedSupporting[selectedCaliSkill] || false;
+  const currentStep = activeTrack ? activeTrack.ladder[activeTrack.currentIndex] : '';
 
   return (
     <div className="min-h-screen bg-[#09090B] text-slate-100 flex flex-col font-sans select-none">
@@ -721,7 +828,7 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">CALISTHENICS HUB</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Autoregulated RPE 8.5–9.0 edge coaching with interactive skill progression ladders & supporting strength exercises.</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Select from 25 advanced skills to track progressions, supporting strength exercises, and training sets.</p>
             </div>
 
             {/* STICKY CALISTHENICS TIMER / STOPWATCH HUD WITH MANUAL TIME INPUT */}
@@ -797,154 +904,178 @@ export default function App() {
               </div>
             </div>
 
-            {/* SKILL PROGRESSION & EXPANDABLE SUPPORTING EXERCISES CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(caliTracks).map(([skillKey, trackData]) => {
-                const currentStep = trackData.ladder[trackData.currentIndex];
-                const supportingList = supportingExercises[skillKey] || [];
-                const isExpanded = expandedSupporting[skillKey];
+            {/* DROPDOWN MENU FOR 25 CALISTHENICS SKILLS */}
+            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 w-full">
+                <span className="text-xs font-mono text-[#00E5FF] uppercase tracking-wider whitespace-nowrap font-bold">Select Skill:</span>
+                <select
+                  value={selectedCaliSkill}
+                  onChange={(e) => setSelectedCaliSkill(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                >
+                  {Object.entries(caliTracks).map(([key, track]) => (
+                    <option key={key} value={key}>
+                      {track.name} ({track.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-                return (
-                  <div key={skillKey} className="p-5 rounded-lg border border-slate-800 bg-slate-900/60 flex flex-col justify-between gap-4">
+            {/* FOCUSED SKILL CARD */}
+            {activeTrack && (
+              <div className="max-w-3xl mx-auto p-6 rounded-lg border border-slate-800 bg-slate-900/80 flex flex-col justify-between gap-6 shadow-xl">
+                <div>
+                  <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-mono font-bold text-base text-white flex items-center gap-2">
-                          <Dumbbell className="w-4 h-4 text-[#00E5FF]" />
-                          {trackData.name}
-                        </h3>
-                        <span className="px-2.5 py-0.5 rounded bg-cyan-950/40 border border-[#00E5FF]/30 text-[#00E5FF] text-xs font-mono">
-                          PR: {trackData.pr}
-                        </span>
-                      </div>
-
-                      {/* Progression Step Selector */}
-                      <div className="mt-3 p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                          <span>Active Level:</span>
-                          <span className="text-[#00E5FF] font-bold">{currentStep}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
-                          <button
-                            disabled={trackData.currentIndex === 0}
-                            onClick={() => {
-                              setCaliTracks(prev => ({
-                                ...prev,
-                                [skillKey]: { ...prev[skillKey], currentIndex: Math.max(0, prev[skillKey].currentIndex - 1) }
-                              }));
-                            }}
-                            className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-[10px] font-mono"
-                          >
-                            <ChevronLeft className="w-3 h-3" /> Prev Step
-                          </button>
-                          <span className="text-[10px] font-mono text-slate-500">
-                            {trackData.currentIndex + 1} / {trackData.ladder.length}
-                          </span>
-                          <button
-                            disabled={trackData.currentIndex === trackData.ladder.length - 1}
-                            onClick={() => {
-                              setCaliTracks(prev => ({
-                                ...prev,
-                                [skillKey]: { ...prev[skillKey], currentIndex: Math.min(trackData.ladder.length - 1, prev[skillKey].currentIndex + 1) }
-                              }));
-                            }}
-                            className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-[10px] font-mono"
-                          >
-                            Next Step <ChevronRight className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Expandable Supporting Strength Exercises Section */}
-                      {supportingList.length > 0 && (
-                        <div className="mt-3 rounded border border-slate-800 bg-slate-950/80 overflow-hidden">
-                          <button
-                            onClick={() => setExpandedSupporting(prev => ({ ...prev, [skillKey]: !prev[skillKey] }))}
-                            className="w-full px-3 py-2 flex items-center justify-between text-xs font-mono text-[#FFB100] hover:bg-slate-900 transition"
-                          >
-                            <span className="font-bold flex items-center gap-1.5">
-                              <span>⚡ Supporting Strength Exercises</span>
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-950/40 text-amber-400 border border-amber-500/30">
-                                {supportingList.length}
-                              </span>
-                            </span>
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                          </button>
-
-                          {isExpanded && (
-                            <div className="p-3 pt-1 space-y-1.5 border-t border-slate-800/80">
-                              {supportingList.map((item, idx) => (
-                                <div key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-1.5">
-                                  <span className="text-[#00E5FF] font-bold">•</span>
-                                  <span>{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">Category: {activeTrack.category}</span>
+                      <h3 className="font-mono font-bold text-lg text-white flex items-center gap-2 mt-0.5">
+                        <Dumbbell className="w-5 h-5 text-[#00E5FF]" />
+                        {activeTrack.name}
+                      </h3>
                     </div>
+                    <span className="px-3 py-1 rounded bg-cyan-950/40 border border-[#00E5FF]/30 text-[#00E5FF] text-xs font-mono font-bold">
+                      PR: {activeTrack.pr}
+                    </span>
+                  </div>
 
-                    <div className="space-y-3 pt-3 border-t border-slate-800">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] font-mono text-slate-400 block mb-1">Reps / Hold Time</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. 12s or 5 reps"
-                            value={caliInputs[skillKey]?.performance || ''}
-                            onChange={(e) => setCaliInputs(prev => ({ ...prev, [skillKey]: { ...prev[skillKey], performance: e.target.value } }))}
-                            className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-mono text-slate-400 block mb-1">Logged RPE</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. 8.5"
-                            value={caliInputs[skillKey]?.rpe || ''}
-                            onChange={(e) => setCaliInputs(prev => ({ ...prev, [skillKey]: { ...prev[skillKey], rpe: e.target.value } }))}
-                            className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
-                          />
-                        </div>
-                      </div>
-
+                  {/* Progression Step Selector */}
+                  <div className="mt-4 p-4 bg-slate-950 rounded border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+                      <span>Active Level Progression:</span>
+                      <span className="text-[#00E5FF] font-bold text-sm">{currentStep}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
                       <button
+                        disabled={activeTrack.currentIndex === 0}
                         onClick={() => {
-                          const perf = caliInputs[skillKey]?.performance;
-                          const rpe = caliInputs[skillKey]?.rpe;
-                          if (!perf) return;
-                          systemAudio.playSound('complete');
-                          const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
                           setCaliTracks(prev => ({
                             ...prev,
-                            [skillKey]: {
-                              ...prev[skillKey],
-                              pr: `${perf} @ RPE ${rpe || '8.5'}`,
-                              history: [logStr, ...prev[skillKey].history]
-                            }
+                            [selectedCaliSkill]: { ...prev[selectedCaliSkill], currentIndex: Math.max(0, prev[selectedCaliSkill].currentIndex - 1) }
                           }));
-                          setCaliInputs(prev => ({ ...prev, [skillKey]: { performance: '', rpe: '8.5' } }));
                         }}
-                        className="w-full py-2 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
+                        className="px-3 py-1.5 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-xs font-mono"
                       >
-                        Log Set & Update PR
+                        <ChevronLeft className="w-3.5 h-3.5" /> Previous Level
+                      </button>
+                      <span className="text-xs font-mono text-slate-500">
+                        Level {activeTrack.currentIndex + 1} of {activeTrack.ladder.length}
+                      </span>
+                      <button
+                        disabled={activeTrack.currentIndex === activeTrack.ladder.length - 1}
+                        onClick={() => {
+                          setCaliTracks(prev => ({
+                            ...prev,
+                            [selectedCaliSkill]: { ...prev[selectedCaliSkill], currentIndex: Math.min(activeTrack.ladder.length - 1, prev[selectedCaliSkill].currentIndex + 1) }
+                          }));
+                        }}
+                        className="px-3 py-1.5 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-xs font-mono"
+                      >
+                        Next Level <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expandable Supporting Strength Exercises Section */}
+                  {activeSupporting.length > 0 && (
+                    <div className="mt-4 rounded border border-slate-800 bg-slate-950/90 overflow-hidden">
+                      <button
+                        onClick={() => setExpandedSupporting(prev => ({ ...prev, [selectedCaliSkill]: !prev[selectedCaliSkill] }))}
+                        className="w-full px-4 py-3 flex items-center justify-between text-xs font-mono text-[#FFB100] hover:bg-slate-900 transition"
+                      >
+                        <span className="font-bold flex items-center gap-2">
+                          <span>⚡ Supporting Strength Exercises</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-500/30">
+                            {activeSupporting.length} exercises
+                          </span>
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
 
-                      {trackData.history.length > 0 && (
-                        <div className="text-[11px] font-mono text-slate-400 space-y-1 pt-1">
-                          <span className="text-slate-500 uppercase tracking-wider block">Recent History:</span>
-                          {trackData.history.slice(0, 2).map((h, i) => (
-                            <div key={i} className="flex items-center gap-1 text-slate-300">
-                              <ChevronRight className="w-3 h-3 text-[#00E5FF]" /> {h}
+                      {isExpanded && (
+                        <div className="p-4 pt-2 space-y-2 border-t border-slate-800/80">
+                          {activeSupporting.map((item, idx) => (
+                            <div key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-2">
+                              <span className="text-[#00E5FF] font-bold">•</span>
+                              <span>{item}</span>
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
+                  )}
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-slate-800">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-mono text-slate-400 block mb-1">Reps / Hold Time</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 12s or 5 reps"
+                        value={caliInputs.performance}
+                        onChange={(e) => setCaliInputs(prev => ({ ...prev, performance: e.target.value }))}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono text-slate-400 block mb-1">Logged RPE</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 8.5"
+                        value={caliInputs.rpe}
+                        onChange={(e) => setCaliInputs(prev => ({ ...prev, rpe: e.target.value }))}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                      />
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        systemAudio.playSound('beep');
+                        setCaliTimer({ active: true, seconds: 30, initialSeconds: 30, activeSkill: activeTrack.name });
+                      }}
+                      className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] font-mono font-bold text-xs rounded border border-[#00E5FF]/30 transition flex items-center justify-center gap-1.5"
+                    >
+                      <Timer className="w-4 h-4" /> Start Hold Timer (30s)
+                    </button>
+                    <button
+                      onClick={() => {
+                        const perf = caliInputs.performance;
+                        const rpe = caliInputs.rpe;
+                        if (!perf) return;
+                        systemAudio.playSound('complete');
+                        const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
+                        setCaliTracks(prev => ({
+                          ...prev,
+                          [selectedCaliSkill]: {
+                            ...prev[selectedCaliSkill],
+                            pr: `${perf} @ RPE ${rpe || '8.5'}`,
+                            history: [logStr, ...prev[selectedCaliSkill].history]
+                          }
+                        }));
+                        setCaliInputs({ performance: '', rpe: '8.5' });
+                      }}
+                      className="flex-1 py-2.5 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
+                    >
+                      Log Set & Update PR
+                    </button>
+                  </div>
+
+                  {activeTrack.history.length > 0 && (
+                    <div className="text-xs font-mono text-slate-400 space-y-1.5 pt-2">
+                      <span className="text-slate-500 uppercase tracking-wider block font-bold">Recent Session History:</span>
+                      {activeTrack.history.slice(0, 3).map((h, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-slate-300">
+                          <ChevronRight className="w-3.5 h-3.5 text-[#00E5FF]" /> {h}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
