@@ -53,6 +53,32 @@ class SystemAudio {
 }
 const systemAudio = new SystemAudio();
 
+/* ============================================================================
+   Math Text Cleaner (Converts LaTeX syntax to clean readable Unicode)
+   ============================================================================ */
+const cleanMathText = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/\$\$([\s\S]*?)\$\$/g, '$1') // remove display math wrappers
+    .replace(/\$([^\$]+?)\$/g, '$1')     // remove inline math wrappers
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1) / ($2)')
+    .replace(/\\sum/g, 'Σ')
+    .replace(/\\int/g, '∫')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\to/g, '→')
+    .replace(/\\implies/g, '⇒')
+    .replace(/\\quad/g, '   ')
+    .replace(/\\lambda/g, 'λ')
+    .replace(/\\det/g, 'det')
+    .replace(/\\ge/g, '≥')
+    .replace(/\\le/g, '≤')
+    .replace(/\\\\/g, '\n')
+    .replace(/\\begin\{pmatrix\}/g, '[')
+    .replace(/\\end\{pmatrix\}/g, ']')
+    .replace(/&/g, ', ')
+    .replace(/\\ /g, ' ');
+};
+
 export default function App() {
   // --- Local Timezone Date Helper ---
   const getLocalDateString = (d = new Date()) => {
@@ -603,7 +629,7 @@ export default function App() {
                             onClick={() => {
                               setCaliTracks(prev => ({
                                 ...prev,
-                                [skillKey]: { ...prev[skillKey], currentIndex: Math.min(prev[skillKey].ladder.length - 1, prev[skillKey].currentIndex + 1) }
+                                [skillKey]: { ...prev[skillKey], currentIndex: Math.min(trackData.ladder.length - 1, prev[skillKey].currentIndex + 1) }
                               }));
                             }}
                             className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-30 flex items-center gap-1 text-[10px] font-mono"
@@ -678,7 +704,7 @@ export default function App() {
           </div>
         )}
 
-        {/* MATH & LOGIC (PARSED FROM 300 PROBLEMS MARKDOWN) */}
+        {/* MATH & LOGIC (WITH cleanMathText APPLIED) */}
         {activeTab === 'math' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -704,23 +730,24 @@ export default function App() {
               <div className="p-6 rounded-lg border border-slate-800 bg-slate-900/60 space-y-4 shadow-lg">
                 <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                   <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950 text-[#00E5FF] border border-[#00E5FF]/30 rounded">
-                    {currentProblem.domain}
+                    {cleanMathText(currentProblem.domain)}
                   </span>
                   <span className="text-xs font-mono text-slate-400">
                     Problem #{currentProblem.id} of {mathProblems.length}
                   </span>
                 </div>
 
-                <h3 className="font-mono font-bold text-lg text-white">{currentProblem.title}</h3>
+                <h3 className="font-mono font-bold text-lg text-white">{cleanMathText(currentProblem.title)}</h3>
 
                 {currentProblem.concept && (
                   <div className="text-xs font-mono text-amber-400 bg-amber-950/20 border border-amber-500/20 px-3 py-1.5 rounded">
-                    <span className="font-bold">Concept:</span> {currentProblem.concept}
+                    <span className="font-bold">Concept:</span> {cleanMathText(currentProblem.concept)}
                   </div>
                 )}
 
+                {/* Cleaned Math Problem Statement */}
                 <div className="text-sm font-mono text-slate-200 bg-slate-950 p-4 rounded border border-slate-800/90 whitespace-pre-wrap leading-relaxed">
-                  {currentProblem.problem}
+                  {cleanMathText(currentProblem.problem)}
                 </div>
 
                 <div className="pt-2 flex flex-col gap-3">
@@ -735,7 +762,7 @@ export default function App() {
                   {showSolution && (
                     <div className="p-4 bg-slate-950 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed">
                       <span className="text-emerald-400 font-bold block mb-2">=== STEP-BY-STEP DERIVATION ===</span>
-                      {currentProblem.solution}
+                      {cleanMathText(currentProblem.solution)}
                     </div>
                   )}
                 </div>
