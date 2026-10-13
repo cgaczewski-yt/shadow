@@ -112,7 +112,33 @@ export default function App() {
   const [manualInputSec, setManualInputSec] = useState('30');
 
   // Supporting Strength Exercises & Expansion State
-  const [supportingExercises, setSupportingExercises] = useState({});
+  const [supportingExercises, setSupportingExercises] = useState({
+    planche: [
+      "Pseudo Planche Lean Holds: Straight-arm protraction with maximum forward shoulder lean.",
+      "Hollow Body Rocks: Core anti-extension stability and pelvic tilt conditioning.",
+      "Scapular Protraction Push-Ups: Serratus anterior isolating push-ups with locked elbows at full extension.",
+      "Dumbbell Zanetti Presses: Forward shoulder raises lying prone to condition the anterior deltoids and biceps tendon."
+    ],
+    frontLever: [
+      "Dragon Flags: Anti-extension posterior core strength and lower back stability.",
+      "Straight-Arm Lat Pulldowns: Straight-arm lat tension and scapular depressor conditioning.",
+      "Weighted Inverted Rows: Mid-back and posterior deltoid hypertrophy under heavy horizontal load.",
+      "Hanging Leg Raises / L-Sits: Hip flexor compression and lower abdominal strength."
+    ],
+    oneArmPullup: [
+      "One-Arm Lockoffs (90° & Top): Isometric bicep and brachialis strength at the sticking point.",
+      "Weighted Pull-Ups: Heavy bilateral lat strength foundation to build raw pulling capacity.",
+      "One-Arm Scapular Pull-Ups: Unilateral scapular depressor strength from a dead hang.",
+      "Bicep Hammer Curls: Elbow flexor and brachioradialis strengthening for elbow health under unilateral torque."
+    ],
+    hspu: [
+      "Overhead Dumbbell / Barbell Press: Heavy deltoid and triceps vertical pressing power.",
+      "Pike Push-Up Deficit Shrugs: Scapular elevation and trapezius strength at lockout.",
+      "Wall-Supported Handstand Holds: Overhead scapular stability and shoulder endurance.",
+      "Triceps Overhead Extension: Long-head triceps isolation to strengthen elbow extension."
+    ]
+  });
+
   const [expandedSupporting, setExpandedSupporting] = useState({
     planche: false,
     frontLever: false,
@@ -183,7 +209,9 @@ export default function App() {
   useEffect(() => {
     async function fetchCaliProgressions() {
       try {
-        const response = await fetch('./calisthenics_progressions.md');
+        const baseUrl = import.meta.env.BASE_URL || './';
+        const response = await fetch(`${baseUrl}calisthenics_progressions.md`);
+        if (!response.ok) return;
         const text = await response.text();
 
         const skillSections = text.split(/(?=##\s+\d+\.\s+)/g).filter(b => b.trim().length > 0);
@@ -191,21 +219,25 @@ export default function App() {
 
         skillSections.forEach(section => {
           let skillKey = null;
-          if (section.includes('Planche')) skillKey = 'planche';
-          else if (section.includes('Front Lever')) skillKey = 'frontLever';
-          else if (section.includes('One-Arm Pull-Up')) skillKey = 'oneArmPullup';
-          else if (section.includes('Handstand Push-Up')) skillKey = 'hspu';
+          if (/Planche/i.test(section)) skillKey = 'planche';
+          else if (/Front Lever/i.test(section)) skillKey = 'frontLever';
+          else if (/One-Arm Pull-Up|OAP/i.test(section)) skillKey = 'oneArmPullup';
+          else if (/Handstand Push-Up|HSPU/i.test(section)) skillKey = 'hspu';
 
           if (skillKey && section.includes('### Supporting Strength Exercises')) {
             const supportIdx = section.indexOf('### Supporting Strength Exercises');
             const sub = section.substring(supportIdx);
             const lines = sub.split('\n').filter(l => l.trim().startsWith('*'));
             const list = lines.map(l => l.replace(/^\*\s*/, '').trim());
-            parsedSupporting[skillKey] = list;
+            if (list.length > 0) {
+              parsedSupporting[skillKey] = list;
+            }
           }
         });
 
-        setSupportingExercises(parsedSupporting);
+        if (Object.keys(parsedSupporting).length > 0) {
+          setSupportingExercises(prev => ({ ...prev, ...parsedSupporting }));
+        }
       } catch (err) {
         console.warn('Error reading calisthenics_progressions.md:', err);
       }
@@ -217,7 +249,9 @@ export default function App() {
   useEffect(() => {
     async function fetchMobilityData() {
       try {
-        const response = await fetch('./stretches/daily_mobility.md');
+        const baseUrl = import.meta.env.BASE_URL || './';
+        const response = await fetch(`${baseUrl}stretches/daily_mobility.md`);
+        if (!response.ok) return;
         const text = await response.text();
         const rawBlocks = text.split(/(?=##\s+Stretch:)/g).filter(b => b.trim().length > 0);
 
@@ -290,7 +324,9 @@ export default function App() {
   useEffect(() => {
     async function fetchMathProblems() {
       try {
-        const response = await fetch('./math/paper_problem_sets.md');
+        const baseUrl = import.meta.env.BASE_URL || './';
+        const response = await fetch(`${baseUrl}math/paper_problem_sets.md`);
+        if (!response.ok) return;
         const text = await response.text();
         const rawBlocks = text.split(/(?=##\s+Problem)/g).filter(b => b.trim().length > 0);
 
