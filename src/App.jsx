@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ToggleLeft, ToggleRight
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 /* ============================================================================
@@ -106,12 +106,19 @@ export default function App() {
   const [activeRoutine, setActiveRoutine] = useState([]);
   const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' });
 
-  // Calisthenics HUD Timer & Mode State (Timer vs Stopwatch)
+  // Calisthenics HUD Timer & Mode State
   const [caliTimerMode, setCaliTimerMode] = useState('timer'); // 'timer' or 'stopwatch'
   const [caliTimer, setCaliTimer] = useState({ active: false, seconds: 30, initialSeconds: 30, activeSkill: '' });
+  const [manualInputSec, setManualInputSec] = useState('30');
 
-  // Supporting Strength Exercises State (Fetched from calisthenics_progressions.md)
+  // Supporting Strength Exercises & Expansion State
   const [supportingExercises, setSupportingExercises] = useState({});
+  const [expandedSupporting, setExpandedSupporting] = useState({
+    planche: false,
+    frontLever: false,
+    oneArmPullup: false,
+    hspu: false
+  });
 
   // KaTeX Renderer Trigger
   useEffect(() => {
@@ -477,7 +484,6 @@ export default function App() {
             }
             return { ...prev, seconds: prev.seconds - 1 };
           } else {
-            // Stopwatch mode: count up
             return { ...prev, seconds: prev.seconds + 1 };
           }
         });
@@ -682,37 +688,64 @@ export default function App() {
               <p className="text-xs text-slate-400 font-mono mt-1">Autoregulated RPE 8.5–9.0 edge coaching with interactive skill progression ladders & supporting strength exercises.</p>
             </div>
 
-            {/* STICKY CALISTHENICS TIMER / STOPWATCH HUD */}
-            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
-                    {caliTimer.activeSkill ? `${caliTimer.activeSkill} Hold` : (caliTimerMode === 'timer' ? 'Active Countdown Timer' : 'Active Stopwatch')}
-                  </span>
+            {/* STICKY CALISTHENICS TIMER / STOPWATCH HUD WITH MANUAL TIME INPUT */}
+            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-start">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
+                      {caliTimer.activeSkill ? `${caliTimer.activeSkill} Hold` : (caliTimerMode === 'timer' ? 'Active Countdown Timer' : 'Active Stopwatch')}
+                    </span>
 
-                  {/* Mode Toggle Switch */}
-                  <button
-                    onClick={() => {
-                      const newMode = caliTimerMode === 'timer' ? 'stopwatch' : 'timer';
-                      setCaliTimerMode(newMode);
-                      setCaliTimer({ active: false, seconds: newMode === 'timer' ? 30 : 0, initialSeconds: 30, activeSkill: '' });
-                    }}
-                    className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 hover:text-[#00E5FF] flex items-center gap-1"
-                  >
-                    {caliTimerMode === 'timer' ? 'Switch to Stopwatch' : 'Switch to Timer'}
-                  </button>
+                    {/* Mode Toggle Switch */}
+                    <button
+                      onClick={() => {
+                        const newMode = caliTimerMode === 'timer' ? 'stopwatch' : 'timer';
+                        setCaliTimerMode(newMode);
+                        setCaliTimer({ active: false, seconds: newMode === 'timer' ? 30 : 0, initialSeconds: 30, activeSkill: '' });
+                      }}
+                      className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 hover:text-[#00E5FF]"
+                    >
+                      {caliTimerMode === 'timer' ? 'Switch to Stopwatch' : 'Switch to Timer'}
+                    </button>
+                  </div>
+
+                  <div className="text-3xl md:text-4xl font-mono font-bold text-white tracking-wider">
+                    {String(Math.floor(caliTimer.seconds / 60)).padStart(2, '0')}:
+                    {String(caliTimer.seconds % 60).padStart(2, '0')}
+                  </div>
                 </div>
 
-                <div className="text-3xl md:text-5xl font-mono font-bold text-white tracking-wider">
-                  {String(Math.floor(caliTimer.seconds / 60)).padStart(2, '0')}:
-                  {String(caliTimer.seconds % 60).padStart(2, '0')}
-                </div>
+                {/* Manual Time Input (Only visible in timer mode) */}
+                {caliTimerMode === 'timer' && (
+                  <div className="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800">
+                    <span className="text-[10px] font-mono text-slate-400">Set (s):</span>
+                    <input
+                      type="number"
+                      min="5"
+                      max="300"
+                      value={manualInputSec}
+                      onChange={(e) => setManualInputSec(e.target.value)}
+                      className="w-14 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-white text-center focus:outline-none focus:border-[#00E5FF]"
+                    />
+                    <button
+                      onClick={() => {
+                        const val = parseInt(manualInputSec, 10) || 30;
+                        setCaliTimer({ active: false, seconds: val, initialSeconds: val, activeSkill: '' });
+                        systemAudio.playSound('beep');
+                      }}
+                      className="px-2 py-1 bg-[#00E5FF] text-black font-mono font-bold text-[10px] rounded hover:bg-[#00E5FF]/85"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                 <button
                   onClick={() => setCaliTimer(prev => ({ ...prev, active: !prev.active }))}
-                  className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
+                  className={`px-5 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
                     caliTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
                   }`}
                 >
@@ -728,11 +761,12 @@ export default function App() {
               </div>
             </div>
 
-            {/* SKILL PROGRESSION & SUPPORTING EXERCISES CARDS */}
+            {/* SKILL PROGRESSION & EXPANDABLE SUPPORTING EXERCISES CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.entries(caliTracks).map(([skillKey, trackData]) => {
                 const currentStep = trackData.ladder[trackData.currentIndex];
                 const supportingList = supportingExercises[skillKey] || [];
+                const isExpanded = expandedSupporting[skillKey];
 
                 return (
                   <div key={skillKey} className="p-5 rounded-lg border border-slate-800 bg-slate-900/60 flex flex-col justify-between gap-4">
@@ -784,20 +818,32 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Supporting Strength Exercises Section */}
+                      {/* Expandable Supporting Strength Exercises Section */}
                       {supportingList.length > 0 && (
-                        <div className="mt-3 p-3 bg-slate-950/80 rounded border border-slate-800/90 space-y-1.5">
-                          <span className="text-[10px] font-mono text-[#FFB100] uppercase tracking-wider block font-bold">
-                            Supporting Strength Exercises:
-                          </span>
-                          <ul className="space-y-1">
-                            {supportingList.map((item, idx) => (
-                              <li key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-1.5">
-                                <span className="text-[#00E5FF] font-bold">•</span>
-                                <span>{item}</span>
-                              </li>
-                            ))}
-                          </ul>
+                        <div className="mt-3 rounded border border-slate-800 bg-slate-950/80 overflow-hidden">
+                          <button
+                            onClick={() => setExpandedSupporting(prev => ({ ...prev, [skillKey]: !prev[skillKey] }))}
+                            className="w-full px-3 py-2 flex items-center justify-between text-xs font-mono text-[#FFB100] hover:bg-slate-900 transition"
+                          >
+                            <span className="font-bold flex items-center gap-1.5">
+                              <span>⚡ Supporting Strength Exercises</span>
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-950/40 text-amber-400 border border-amber-500/30">
+                                {supportingList.length}
+                              </span>
+                            </span>
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+
+                          {isExpanded && (
+                            <div className="p-3 pt-1 space-y-1.5 border-t border-slate-800/80">
+                              {supportingList.map((item, idx) => (
+                                <div key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-1.5">
+                                  <span className="text-[#00E5FF] font-bold">•</span>
+                                  <span>{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -826,38 +872,27 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            systemAudio.playSound('beep');
-                            setCaliTimer({ active: true, seconds: 30, initialSeconds: 30, activeSkill: trackData.name });
-                          }}
-                          className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] font-mono font-bold text-xs rounded border border-[#00E5FF]/30 transition flex items-center justify-center gap-1"
-                        >
-                          <Timer className="w-3.5 h-3.5" /> Start Hold Timer
-                        </button>
-                        <button
-                          onClick={() => {
-                            const perf = caliInputs[skillKey]?.performance;
-                            const rpe = caliInputs[skillKey]?.rpe;
-                            if (!perf) return;
-                            systemAudio.playSound('complete');
-                            const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
-                            setCaliTracks(prev => ({
-                              ...prev,
-                              [skillKey]: {
-                                ...prev[skillKey],
-                                pr: `${perf} @ RPE ${rpe || '8.5'}`,
-                                history: [logStr, ...prev[skillKey].history]
-                              }
-                            }));
-                            setCaliInputs(prev => ({ ...prev, [skillKey]: { performance: '', rpe: '8.5' } }));
-                          }}
-                          className="flex-1 py-1.5 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
-                        >
-                          Log Set & Update PR
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => {
+                          const perf = caliInputs[skillKey]?.performance;
+                          const rpe = caliInputs[skillKey]?.rpe;
+                          if (!perf) return;
+                          systemAudio.playSound('complete');
+                          const logStr = `${perf} @ RPE ${rpe || '8.5'} (${currentStep})`;
+                          setCaliTracks(prev => ({
+                            ...prev,
+                            [skillKey]: {
+                              ...prev[skillKey],
+                              pr: `${perf} @ RPE ${rpe || '8.5'}`,
+                              history: [logStr, ...prev[skillKey].history]
+                            }
+                          }));
+                          setCaliInputs(prev => ({ ...prev, [skillKey]: { performance: '', rpe: '8.5' } }));
+                        }}
+                        className="w-full py-2 bg-[#00E5FF] text-black font-mono font-bold text-xs rounded hover:bg-[#00E5FF]/85 transition"
+                      >
+                        Log Set & Update PR
+                      </button>
 
                       {trackData.history.length > 0 && (
                         <div className="text-[11px] font-mono text-slate-400 space-y-1 pt-1">
