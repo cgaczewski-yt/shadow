@@ -176,6 +176,8 @@ export default function App() {
         const rawBlocks = text.split(/(?=##\s+Stretch:)/g).filter(b => b.trim().length > 0);
 
         const parsed = rawBlocks.map(block => {
+          if (!block.includes('### Body Part')) return null;
+
           const lines = block.trim().split('\n');
           const name = lines[0] ? lines[0].replace(/^##\s+Stretch:\s*/, '').trim() : 'Stretch';
 
@@ -196,7 +198,7 @@ export default function App() {
           const timeInSeconds = parseInt(defaultTime.replace(/\D/g, ''), 10) || 60;
 
           return { name, bodyPart, defaultTime, timeInSeconds, focus, cues };
-        });
+        }).filter(Boolean);
 
         setMobilityLibrary(parsed);
         generateRoutine(parsed, { neck: true, upper_back: true, lower_back: true, legs: true, arms: true }, 12);
@@ -225,7 +227,6 @@ export default function App() {
     let selected = [];
     let currentSec = 0;
 
-    // Shuffle pool
     const shuffled = [...matchingPool].sort(() => 0.5 - Math.random());
 
     let i = 0;
@@ -843,7 +844,7 @@ export default function App() {
           </div>
         )}
 
-        {/* MOBILITY ROUTINE (NEW CUSTOM BODY PART & TIME GENERATOR) */}
+        {/* MOBILITY ROUTINE */}
         {activeTab === 'mobility' && (
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -854,7 +855,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Active Timer HUD */}
               <div className="p-4 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-6">
                 <div>
                   <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
@@ -885,7 +885,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Target Area Controls */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
                 <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
@@ -913,7 +912,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Body Part Selection Toggles */}
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: 'neck', label: 'Neck' },
@@ -956,7 +954,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Generated Routine Card Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {activeRoutine.length > 0 ? (
                 activeRoutine.map((stretch, i) => (
