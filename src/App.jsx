@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp, Filter
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp, Filter, Search
 } from 'lucide-react';
 
 /* ============================================================================
@@ -117,7 +117,7 @@ export default function App() {
     core: true
   });
   const [selectedEquipment, setSelectedEquipment] = useState('ALL');
-  const [activeGymWorkout, setActiveGymWorkout] = useState([]);
+  const [gymSearchQuery, setGymSearchQuery] = useState('');
   const [gymStopwatch, setGymStopwatch] = useState({ active: false, seconds: 0, activeExercise: '' });
 
   // Calisthenics HUD Timer & Mode State
@@ -184,13 +184,16 @@ export default function App() {
 
   const [caliInputs, setCaliInputs] = useState({ performance: '', rpe: '8.5' });
 
-  // --- Fetch Gym Exercises Markdown ---
+  // --- Fetch Gym Exercises Markdown (Fixed Subfolder Path) ---
   useEffect(() => {
     async function fetchGymData() {
       try {
         const baseUrl = import.meta.env.BASE_URL || './';
-        const response = await fetch(`${baseUrl}gym_exercises.md`);
-        if (!response.ok) return;
+        const response = await fetch(`${baseUrl}gym/gym_exercises.md`);
+        if (!response.ok) {
+          console.warn('Failed to load gym_exercises.md from gym/ subfolder');
+          return;
+        }
         const text = await response.text();
         const rawBlocks = text.split(/(?=##\s+Exercise:)/g).filter(b => b.trim().length > 0);
 
@@ -217,36 +220,24 @@ export default function App() {
         }).filter(Boolean);
 
         setGymLibrary(parsed);
-        generateGymWorkout(parsed, gymSelectedParts, 'ALL');
       } catch (err) {
-        console.warn('Error reading gym_exercises.md:', err);
+        console.warn('Error reading gym/gym_exercises.md:', err);
       }
     }
     fetchGymData();
   }, []);
 
-  // --- Generate Random Gym Workout ---
-  const generateGymWorkout = (library = gymLibrary, activeParts = gymSelectedParts, equipFilter = selectedEquipment) => {
-    const enabledParts = Object.keys(activeParts).filter(k => activeParts[k]);
-    if (enabledParts.length === 0 || library.length === 0) {
-      setActiveGymWorkout([]);
-      return;
-    }
-
-    let matchingPool = library.filter(e => enabledParts.includes(e.bodyPart));
-
-    if (equipFilter !== 'ALL') {
-      matchingPool = matchingPool.filter(e => e.equipment.toLowerCase().includes(equipFilter.toLowerCase()));
-    }
-
-    if (matchingPool.length === 0) {
-      setActiveGymWorkout([]);
-      return;
-    }
-
-    const shuffled = [...matchingPool].sort(() => 0.5 - Math.random());
-    setActiveGymWorkout(shuffled.slice(0, 8));
-  };
+  // --- Filtered Gym Exercises (Body Part, Equipment, Search Bar) ---
+  const filteredGymExercises = gymLibrary.filter(ex => {
+    const matchesPart = gymSelectedParts[ex.bodyPart];
+    const matchesEquip = selectedEquipment === 'ALL' || ex.equipment.toLowerCase().includes(selectedEquipment.toLowerCase());
+    const matchesSearch = gymSearchQuery.trim() === '' ||
+      ex.name.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
+      ex.bodyPart.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
+      ex.equipment.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
+      ex.description.toLowerCase().includes(gymSearchQuery.toLowerCase());
+    return matchesPart && matchesEquip && matchesSearch;
+  });
 
   // --- Fetch Mobility Markdown Library ---
   useEffect(() => {
@@ -616,7 +607,7 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GYM EXERCISES & WORKOUTS</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Filter resistance exercises by targeted body parts and available gym equipment.</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, and track resistance exercises by targeted body parts and available gym equipment.</p>
             </div>
 
             {/* STICKY GYM STOPWATCH HUD */}
@@ -650,30 +641,43 @@ export default function App() {
               </div>
             </div>
 
-            {/* FILTER CONTROLS */}
+            {/* FILTER & SEARCH CONTROLS */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
                 <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
                   <Sliders className="w-4 h-4" /> Body Part Selection
                 </span>
 
-                <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
-                  <Filter className="w-3.5 h-3.5 text-[#00E5FF]" />
-                  <span>Equipment Available:</span>
-                  <select
-                    value={selectedEquipment}
-                    onChange={(e) => {
-                      setSelectedEquipment(e.target.value);
-                      generateGymWorkout(gymLibrary, gymSelectedParts, e.target.value);
-                    }}
-                    className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
-                  >
-                    <option value="ALL">All Equipment</option>
-                    <option value="Barbell">Barbell</option>
-                    <option value="Dumbbells">Dumbbells</option>
-                    <option value="Cable Machine">Cable Machine</option>
-                    <option value="Bench">Bench</option>
-                  </select>
+                <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-slate-300">
+                  {/* Search Input Bar */}
+                  <div className="relative flex items-center">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Search exercises..."
+                      value={gymSearchQuery}
+                      onChange={(e) => setGymSearchQuery(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF]"
+                    />
+                  </div>
+
+                  {/* Equipment Filter */}
+                  <div className="flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5 text-[#00E5FF]" />
+                    <select
+                      value={selectedEquipment}
+                      onChange={(e) => setSelectedEquipment(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
+                    >
+                      <option value="ALL">All Equipment</option>
+                      <option value="Barbell">Barbell</option>
+                      <option value="Dumbbells">Dumbbells</option>
+                      <option value="Cable Machine">Cable Machine</option>
+                      <option value="Bench">Bench</option>
+                      <option value="Squat Rack">Squat Rack</option>
+                      <option value="Pull-Up Bar">Pull-Up Bar</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -692,9 +696,7 @@ export default function App() {
                     <button
                       key={part.key}
                       onClick={() => {
-                        const updated = { ...gymSelectedParts, [part.key]: !isChecked };
-                        setGymSelectedParts(updated);
-                        generateGymWorkout(gymLibrary, updated, selectedEquipment);
+                        setGymSelectedParts(prev => ({ ...prev, [part.key]: !isChecked }));
                       }}
                       className={`px-3 py-1.5 rounded font-mono text-xs border transition ${
                         isChecked
@@ -709,20 +711,22 @@ export default function App() {
               </div>
 
               <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
-                <span>Active Workout Queue: <span className="text-white font-bold">{activeGymWorkout.length} Exercises</span></span>
-                <button
-                  onClick={() => generateGymWorkout(gymLibrary, gymSelectedParts, selectedEquipment)}
-                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] rounded flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Re-roll Gym Routine
-                </button>
+                <span>Showing <span className="text-white font-bold">{filteredGymExercises.length} Exercises</span></span>
+                {gymSearchQuery && (
+                  <button
+                    onClick={() => setGymSearchQuery('')}
+                    className="text-[#00E5FF] hover:underline"
+                  >
+                    Clear Search
+                  </button>
+                )}
               </div>
             </div>
 
             {/* EXERCISE CARDS GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeGymWorkout.length > 0 ? (
-                activeGymWorkout.map((ex, i) => (
+              {filteredGymExercises.length > 0 ? (
+                filteredGymExercises.map((ex, i) => (
                   <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
                     <div>
                       <div className="flex items-center justify-between mb-1">
@@ -754,7 +758,7 @@ export default function App() {
                 ))
               ) : (
                 <div className="col-span-2 p-8 text-center font-mono text-xs text-slate-500 bg-slate-900/40 rounded border border-slate-800">
-                  No matching exercises found for the selected body parts and equipment filter.
+                  No matching exercises found for your search query, body part filters, and equipment selection.
                 </div>
               )}
             </div>
