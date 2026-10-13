@@ -1,45 +1,59 @@
----
-domain: Physical Preparation & Joint Health
-protocol_time_minutes: 15
-frequency: Daily
----
+# Full-Body & Target Area Mobility Library
 
-# Daily 15-Minute Full-Body Mobility Protocol
-
-## Sequence Overview
-
-| Order | Exercise | Primary Target | Setup Focus | Duration / Reps |
-| :---: | :--- | :--- | :--- | :--- |
-| 1 | **Jefferson Curls** | Spinal Articulation & Posterior Chain | Slow segment-by-segment spinal flexion | 3 sets × 5 reps (20s down/up) |
-| 2 | **Couch Stretch** | Hip Flexors & Rectus Femoris | Posterior Pelvic Tilt (PPT) | 2 sets × 60s per side |
-| 3 | **German Hang Stretch** | Shoulder Extension & Biceps Tendons | Active scapular depression | 3 sets × 30s holds |
-| 4 | **Active Pancake Stretch** | Adductors & Thoracolumbar Decompression | Neutral spine pull into anterior tilt | 3 sets × 45s active holds |
-| 5 | **Wrist & Forearm Prep** | Wrist Flexors/Extensors & First Dorsal Interosseous | Planche / HSPU leaning pressure | 2 sets × 15 rotations + 30s lean |
+## Stretch: Upper Trap & Levator Release
+### Body Part
+neck
+### Default Time
+60s
+### Focus
+Cervical spine decompression & upper trap strain relief
+### Cues
+Depress the opposite shoulder, gently tilt head 45 degrees forward and sideways. Avoid pulling hard on the cranium.
 
 ---
 
-## Exercise Cues & Biomechanical Setup
+## Stretch: Thoracic Spine Extension
+### Body Part
+upper_back
+### Default Time
+90s
+### Focus
+Upper back extension & thoracic cavity mobilization
+### Cues
+Position foam roller or block under mid-back. Maintain posterior pelvic tilt to prevent lower back overarching; exhale deeply as chest opens.
 
-### 1. Jefferson Curl
-* **Biomechanical Cue:** Stand elevated on a box. Begin curling downward strictly starting at the cervical spine (chin to chest), followed by thoracic, then lumbar. Keep knees locked and quadriceps engaged.
-* **Breathing:** Exhale fully during the descent; inhale slowly at the bottom fold.
-* **Tendon Focus:** Posterior ligamentous chain & hamstring origin tendon adaptation.
+---
 
-### 2. Couch Stretch
-* **Biomechanical Cue:** Place rear shin flat against a wall with back knee pinned directly in the corner. Squeeze rear glute forcefully to drive pelvis into **Posterior Pelvic Tilt (PPT)**. Do not hyperextend the lower back.
-* **Breathing:** Deep abdominal diaphragmatic breaths (4s in, 6s out).
-* **Tendon Focus:** Rectus femoris origin & iliopsoas elongation.
+## Stretch: Jefferson Curl & Lumbar Flexion
+### Body Part
+lower_back
+### Default Time
+90s
+### Focus
+Segmental spinal articulation & posterior chain lengthen
+### Cues
+Tuck chin to chest first. Slowly roll down one vertebra at a time with a light kettlebell or bodyweight. Keep knees soft but firm.
 
-### 3. German Hang Stretch
-* **Biomechanical Cue:** Grip rings or bar in an inverted position, then slowly lower feet toward the floor behind you into shoulder extension. Keep chest high and actively depress scapulae.
-* **Breathing:** Continuous shallow breathing; do not hold breath under stretch load.
-* **Tendon Focus:** Anterior shoulder capsule, distal biceps tendon, and pectoralis minor.
+---
 
-### 4. Active Pancake Stretch
-* **Biomechanical Cue:** Sit on the floor with legs spread wide in straddle position. Rotate pelvis into **Anterior Pelvic Tilt (APT)** and pull chest toward the floor using active hip flexor / adductor engagement rather than rounding upper back.
-* **Breathing:** Exhale as you pull deeper into the straddle fold.
-* **Tendon Focus:** Adductor magnus/longus flexibility and lower back decompression.
+## Stretch: Couch Stretch (Hip Flexors & Quads)
+### Body Part
+legs
+### Default Time
+120s
+### Focus
+Rectus femoris & deep psoas decompression
+### Cues
+Back knee flush against the wall/couch. Squeeze the glute on the target side relentlessly while keeping ribs locked down to prevent spinal extension.
 
-### 5. Wrist & Forearm conditioning
-* **Biomechanical Cue:** On hands and knees, turn fingertips backward toward knees. Shift shoulders forward over hands for flexor stretch, then reverse hands for extensor stretch. End with weighted lean into planche angle.
-* **Tendon Focus:** Wrist flexor/extensor tendons and carpal joint conditioning for heavy isometric bodyweight leverage.
+---
+
+## Stretch: Shoulder Butcher Block & Lat Opener
+### Body Part
+arms
+### Default Time
+90s
+### Focus
+Latissimus dorsi, triceps long-head, and overhead shoulder mobility
+### Cues
+Place elbows on a bench or chair with hands behind neck holding a dowel. Drive chest toward the floor while keeping core braced.

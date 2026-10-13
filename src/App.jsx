@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone, RefreshCw
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders
 } from 'lucide-react';
 
 /* ============================================================================
@@ -87,13 +87,26 @@ export default function App() {
   const [timeLeftToday, setTimeLeftToday] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const wakeLockRef = useRef(null);
 
-  // Math Problem Set State & Robust Parser
+  // Math Problem Set State
   const [mathProblems, setMathProblems] = useState([]);
   const [currentMathIndex, setCurrentMathIndex] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
   const [mathLoading, setMathLoading] = useState(true);
 
-  // --- KaTeX Auto-Render Effect for True LaTeX Math ---
+  // Mobility Module State
+  const [mobilityLibrary, setMobilityLibrary] = useState([]);
+  const [selectedBodyParts, setSelectedBodyParts] = useState({
+    neck: true,
+    upper_back: true,
+    lower_back: true,
+    legs: true,
+    arms: true
+  });
+  const [targetDurationMinutes, setTargetDurationMinutes] = useState(12);
+  const [activeRoutine, setActiveRoutine] = useState([]);
+  const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' });
+
+  // KaTeX Renderer Trigger
   useEffect(() => {
     if (activeTab === 'math' && window.renderMathInElement) {
       const mathContainer = document.getElementById('math-quest-container');
@@ -109,7 +122,7 @@ export default function App() {
     }
   }, [activeTab, currentMathIndex, showSolution, mathLoading]);
 
-  // Calisthenics Tracks & Progression Ladder State
+  // Calisthenics Tracks
   const [caliTracks, setCaliTracks] = useState(() => {
     const saved = localStorage.getItem('shadow_cali_tracks_v1');
     if (saved) return JSON.parse(saved);
@@ -153,16 +166,85 @@ export default function App() {
   });
 
   const [caliTimer, setCaliTimer] = useState({ active: false, secondsLeft: 30, total: 30 });
-  const [mobilityTimer, setMobilityTimer] = useState({ active: false, secondsLeft: 60, total: 60 });
 
-  // --- Robust Markdown Parser for 300 Problems File ---
+  // --- Fetch Mobility Markdown Library ---
+  useEffect(() => {
+    async function fetchMobilityData() {
+      try {
+        const response = await fetch('./stretches/daily_mobility.md');
+        const text = await response.text();
+        const rawBlocks = text.split(/(?=##\s+Stretch:)/g).filter(b => b.trim().length > 0);
+
+        const parsed = rawBlocks.map(block => {
+          const lines = block.trim().split('\n');
+          const name = lines[0] ? lines[0].replace(/^##\s+Stretch:\s*/, '').trim() : 'Stretch';
+
+          const getSection = (marker) => {
+            const idx = block.indexOf(marker);
+            if (idx === -1) return '';
+            const start = idx + marker.length;
+            const rest = block.substring(start);
+            const nextIdx = rest.search(/###|\n\n/);
+            return (nextIdx === -1 ? rest : rest.substring(0, nextIdx)).trim();
+          };
+
+          const bodyPart = getSection('### Body Part').toLowerCase() || 'legs';
+          const defaultTime = getSection('### Default Time') || '60s';
+          const focus = getSection('### Focus') || '';
+          const cues = getSection('### Cues') || '';
+
+          const timeInSeconds = parseInt(defaultTime.replace(/\D/g, ''), 10) || 60;
+
+          return { name, bodyPart, defaultTime, timeInSeconds, focus, cues };
+        });
+
+        setMobilityLibrary(parsed);
+        generateRoutine(parsed, { neck: true, upper_back: true, lower_back: true, legs: true, arms: true }, 12);
+      } catch (err) {
+        console.warn('Error reading daily_mobility.md:', err);
+      }
+    }
+    fetchMobilityData();
+  }, []);
+
+  // --- Generate Random Routine Based on Target Parts & Duration ---
+  const generateRoutine = (library = mobilityLibrary, activeParts = selectedBodyParts, targetMinutes = targetDurationMinutes) => {
+    const enabledTags = Object.keys(activeParts).filter(k => activeParts[k]);
+    if (enabledTags.length === 0 || library.length === 0) {
+      setActiveRoutine([]);
+      return;
+    }
+
+    const matchingPool = library.filter(s => enabledTags.includes(s.bodyPart));
+    if (matchingPool.length === 0) {
+      setActiveRoutine([]);
+      return;
+    }
+
+    const targetSec = targetMinutes * 60;
+    let selected = [];
+    let currentSec = 0;
+
+    // Shuffle pool
+    const shuffled = [...matchingPool].sort(() => 0.5 - Math.random());
+
+    let i = 0;
+    while (currentSec < targetSec && selected.length < 12) {
+      const item = shuffled[i % shuffled.length];
+      selected.push(item);
+      currentSec += item.timeInSeconds;
+      i++;
+    }
+
+    setActiveRoutine(selected);
+  };
+
+  // --- Fetch Math Problems Markdown ---
   useEffect(() => {
     async function fetchMathProblems() {
       try {
         const response = await fetch('./math/paper_problem_sets.md');
         const text = await response.text();
-
-        // Split by problem headers (## Problem)
         const rawBlocks = text.split(/(?=##\s+Problem)/g).filter(b => b.trim().length > 0);
 
         const parsed = rawBlocks.map((block, idx) => {
@@ -174,7 +256,6 @@ export default function App() {
             const startIndex = block.indexOf(startMarker);
             if (startIndex === -1) return '';
             const contentStart = startIndex + startMarker.length;
-
             let endIndex = block.length;
             for (const em of endMarkers) {
               const emIndex = block.indexOf(em, contentStart);
@@ -212,7 +293,6 @@ export default function App() {
         setMathLoading(false);
       }
     }
-
     fetchMathProblems();
   }, [todayStr]);
 
@@ -220,7 +300,6 @@ export default function App() {
     systemAudio.playSound('beep');
     setShowSolution(false);
     if (mathProblems.length === 0) return;
-
     let nextIndex = currentMathIndex;
     if (mathProblems.length > 1) {
       while (nextIndex === currentMathIndex) {
@@ -694,7 +773,7 @@ export default function App() {
           </div>
         )}
 
-        {/* MATH & LOGIC (WITH KaTeX TARGET ID) */}
+        {/* MATH & LOGIC */}
         {activeTab === 'math' && (
           <div id="math-quest-container" className="space-y-6 max-w-4xl mx-auto">
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -735,7 +814,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Raw Markdown statement with $and$$ tags for KaTeX auto-render */}
                 <div className="text-sm font-mono text-slate-200 bg-slate-950 p-4 rounded border border-slate-800/90 whitespace-pre-wrap leading-relaxed">
                   {currentProblem.problem}
                 </div>
@@ -765,18 +843,23 @@ export default function App() {
           </div>
         )}
 
-        {/* MOBILITY ROUTINE */}
+        {/* MOBILITY ROUTINE (NEW CUSTOM BODY PART & TIME GENERATOR) */}
         {activeTab === 'mobility' && (
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MOBILITY ROUTINE</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">Biomechanical joint preparation with active hold timers.</p>
+                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">MOBILITY ROUTINE GENERATOR</h2>
+                <p className="text-xs text-slate-400 font-mono mt-1">
+                  10–15 min full-body or targeted routines pulled dynamically from daily_mobility.md.
+                </p>
               </div>
 
+              {/* Active Timer HUD */}
               <div className="p-4 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-6">
                 <div>
-                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">Active Hold Timer</span>
+                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
+                    {mobilityTimer.currentStretchName || 'Active Hold Timer'}
+                  </span>
                   <div className="text-4xl md:text-5xl font-mono font-bold text-white tracking-wider">
                     {Math.floor(mobilityTimer.secondsLeft / 60)}:
                     {String(mobilityTimer.secondsLeft % 60).padStart(2, '0')}
@@ -793,7 +876,7 @@ export default function App() {
                     {mobilityTimer.active ? 'PAUSE' : 'START HOLD'}
                   </button>
                   <button
-                    onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60 })}
+                    onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' })}
                     className="px-4 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
                   >
                     <RotateCcw className="w-3 h-3" /> Reset 60s
@@ -802,35 +885,120 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { name: 'Thoracic Spine Extension', duration: '90s', focus: 'Upper back extension over foam roller/block', cues: 'Posterior pelvic tilt, exhale deeply into upper back.' },
-                { name: 'Couch Stretch (Hip Flexors)', duration: '120s / leg', focus: 'Hip flexors, rectus femoris, psoas', cues: 'Squeeze glute hard on stretched leg, keep ribs locked down.' },
-                { name: 'Jefferson Curls', duration: '60s (5 reps slow)', focus: 'Spinal articulation & hamstring length', cues: 'Chin to chest first, segmentally roll down vertebrae by vertebrae.' },
-                { name: 'Shoulder Butcher Block', duration: '90s', focus: 'Lat & overhead shoulder mobility', cues: 'Hands elevated on bench, drop chest toward floor.' },
-                { name: 'Wrist Flexor & Extensor Prep', duration: '60s', focus: 'Wrist joint conditioning for planche/handstand', cues: 'Palms forward/out, lean gently over wrists with locked elbows.' }
-              ].map((stretch, i) => (
-                <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-mono font-bold text-sm text-white">{stretch.name}</h3>
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-[#00E5FF] text-xs font-mono">{stretch.duration}</span>
-                    </div>
-                    <p className="text-xs text-slate-400 font-mono"><span className="text-slate-300">Target:</span> {stretch.focus}</p>
-                    <p className="text-xs text-slate-300 font-mono mt-2 bg-slate-950 p-2.5 rounded border border-slate-800/80">
-                      <span className="text-[#FFB100]">Form Cue:</span> {stretch.cues}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setMobilityTimer({ active: true, secondsLeft: stretch.duration.includes('120') ? 120 : 90, total: 90 });
-                    }}
-                    className="w-full py-2 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-slate-200 rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2"
-                  >
-                    <Timer className="w-3.5 h-3.5" /> Start {stretch.duration} Timer
-                  </button>
+            {/* Target Area Controls */}
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
+                  <Sliders className="w-4 h-4" /> Routine Customizer
+                </span>
+
+                <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
+                  <span>Target Time:</span>
+                  {[5, 10, 12, 15].map(mins => (
+                    <button
+                      key={mins}
+                      onClick={() => {
+                        setTargetDurationMinutes(mins);
+                        generateRoutine(mobilityLibrary, selectedBodyParts, mins);
+                      }}
+                      className={`px-2.5 py-1 rounded border ${
+                        targetDurationMinutes === mins
+                          ? 'bg-[#00E5FF] text-black font-bold border-[#00E5FF]'
+                          : 'bg-slate-950 border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {mins}m
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Body Part Selection Toggles */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'neck', label: 'Neck' },
+                  { key: 'upper_back', label: 'Upper Back' },
+                  { key: 'lower_back', label: 'Lower Back' },
+                  { key: 'legs', label: 'Legs' },
+                  { key: 'arms', label: 'Arms / Shoulders' }
+                ].map(part => {
+                  const isChecked = selectedBodyParts[part.key];
+                  return (
+                    <button
+                      key={part.key}
+                      onClick={() => {
+                        const updated = { ...selectedBodyParts, [part.key]: !isChecked };
+                        setSelectedBodyParts(updated);
+                        generateRoutine(mobilityLibrary, updated, targetDurationMinutes);
+                      }}
+                      className={`px-3 py-1.5 rounded font-mono text-xs border transition ${
+                        isChecked
+                          ? 'bg-cyan-950/60 text-[#00E5FF] border-[#00E5FF]/40 font-bold'
+                          : 'bg-slate-950 text-slate-500 border-slate-800'
+                      }`}
+                    >
+                      {isChecked ? '✓ ' : '+ '}{part.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
+                <span>
+                  Estimated Routine Length: <span className="text-white font-bold">{activeRoutine.reduce((acc, curr) => acc + curr.timeInSeconds, 0) / 60} mins</span> ({activeRoutine.length} exercises)
+                </span>
+                <button
+                  onClick={() => generateRoutine(mobilityLibrary, selectedBodyParts, targetDurationMinutes)}
+                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] rounded flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Re-roll Routine
+                </button>
+              </div>
+            </div>
+
+            {/* Generated Routine Card Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeRoutine.length > 0 ? (
+                activeRoutine.map((stretch, i) => (
+                  <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-mono font-bold text-sm text-white flex items-center gap-2">
+                          <span className="text-xs text-[#00E5FF] border border-[#00E5FF]/30 px-1.5 py-0.2 rounded bg-cyan-950/40 uppercase">
+                            {stretch.bodyPart.replace('_', ' ')}
+                          </span>
+                          {stretch.name}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[#00E5FF] text-xs font-mono">
+                          {stretch.defaultTime}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono mt-1"><span className="text-slate-300">Target:</span> {stretch.focus}</p>
+                      <p className="text-xs text-slate-300 font-mono mt-2 bg-slate-950 p-2.5 rounded border border-slate-800/80">
+                        <span className="text-[#FFB100]">Form Cue:</span> {stretch.cues}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        systemAudio.playSound('beep');
+                        setMobilityTimer({
+                          active: true,
+                          secondsLeft: stretch.timeInSeconds,
+                          total: stretch.timeInSeconds,
+                          currentStretchName: stretch.name
+                        });
+                      }}
+                      className="w-full py-2 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-slate-200 rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2"
+                    >
+                      <Timer className="w-3.5 h-3.5" /> Start {stretch.defaultTime} Timer
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 p-8 text-center font-mono text-xs text-slate-500 bg-slate-900/40 rounded border border-slate-800">
+                  Select at least one body part tag above to generate a mobility routine.
+                </div>
+              )}
             </div>
           </div>
         )}
