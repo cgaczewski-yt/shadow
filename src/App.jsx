@@ -844,47 +844,47 @@ export default function App() {
           </div>
         )}
 
-        {/* MOBILITY ROUTINE */}
+        {/* MOBILITY ROUTINE (STICKY TIMER AT THE TOP) */}
         {activeTab === 'mobility' && (
           <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">MOBILITY ROUTINE GENERATOR</h2>
-                <p className="text-xs text-slate-400 font-mono mt-1">
-                  10–15 min full-body or targeted routines pulled dynamically from daily_mobility.md.
-                </p>
-              </div>
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">MOBILITY ROUTINE GENERATOR</h2>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                10–15 min full-body or targeted routines pulled dynamically from daily_mobility.md.
+              </p>
+            </div>
 
-              <div className="p-4 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/5 flex items-center gap-6">
-                <div>
-                  <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
-                    {mobilityTimer.currentStretchName || 'Active Hold Timer'}
-                  </span>
-                  <div className="text-4xl md:text-5xl font-mono font-bold text-white tracking-wider">
-                    {Math.floor(mobilityTimer.secondsLeft / 60)}:
-                    {String(mobilityTimer.secondsLeft % 60).padStart(2, '0')}
-                  </div>
+            {/* STICKY ACTIVE TIMER HUD (PINNED TO TOP WHILE SCROLLING) */}
+            <div className="sticky top-[100px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
+                  {mobilityTimer.currentStretchName || 'Active Hold Timer'}
+                </span>
+                <div className="text-3xl md:text-5xl font-mono font-bold text-white tracking-wider">
+                  {Math.floor(mobilityTimer.secondsLeft / 60)}:
+                  {String(mobilityTimer.secondsLeft % 60).padStart(2, '0')}
                 </div>
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => setMobilityTimer(prev => ({ ...prev, active: !prev.active }))}
-                    className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
-                      mobilityTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
-                    }`}
-                  >
-                    {mobilityTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    {mobilityTimer.active ? 'PAUSE' : 'START HOLD'}
-                  </button>
-                  <button
-                    onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' })}
-                    className="px-4 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
-                  >
-                    <RotateCcw className="w-3 h-3" /> Reset 60s
-                  </button>
-                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMobilityTimer(prev => ({ ...prev, active: !prev.active }))}
+                  className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
+                    mobilityTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
+                  }`}
+                >
+                  {mobilityTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {mobilityTimer.active ? 'PAUSE' : 'START HOLD'}
+                </button>
+                <button
+                  onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' })}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
+            {/* Target Area Controls */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
                 <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
@@ -912,6 +912,7 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Body Part Selection Toggles */}
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: 'neck', label: 'Neck' },
@@ -954,6 +955,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* Generated Routine Card Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {activeRoutine.length > 0 ? (
                 activeRoutine.map((stretch, i) => (
