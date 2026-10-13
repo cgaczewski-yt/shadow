@@ -104,10 +104,11 @@ export default function App() {
 
   // Gym Exercises Module State
   const [gymLibrary, setGymLibrary] = useState([]);
+  const [availableEquipmentList, setAvailableEquipmentList] = useState([]);
+  const [selectedEquipmentMap, setSelectedEquipmentMap] = useState({});
   const [gymSelectedParts, setGymSelectedParts] = useState({
     chest: true, back: true, triceps: true, bicep: true, legs: true, core: true
   });
-  const [selectedEquipment, setSelectedEquipment] = useState('ALL');
   const [gymSearchQuery, setGymSearchQuery] = useState('');
   const [gymStopwatch, setGymStopwatch] = useState({ active: false, seconds: 0, activeExercise: '' });
 
@@ -161,7 +162,7 @@ export default function App() {
     localStorage.setItem('shadow_gym_logs_v1', JSON.stringify(gymLogs));
   }, [pillars, caliTracks, gymLogs]);
 
-  // --- Robust Gym Exercises Markdown Fetcher ---
+  // --- Robust Gym Exercises Markdown Fetcher & Auto-Equipment Extractor ---
   useEffect(() => {
     async function fetchGymData() {
       const baseUrl = import.meta.env.BASE_URL || './';
@@ -212,22 +213,57 @@ export default function App() {
       }).filter(item => item.name && item.bodyPart);
 
       setGymLibrary(parsed);
+
+      // Auto-extract unique equipment items from parsed markdown
+      const uniqueEquipSet = new Set();
+      parsed.forEach(ex => {
+        if (ex.equipment) {
+          ex.equipment.split(',').forEach(eq => {
+            const trimmed = eq.trim();
+            if (trimmed) uniqueEquipSet.add(trimmed);
+          });
+        }
+      });
+
+      const equipList = Array.from(uniqueEquipSet).sort();
+      setAvailableEquipmentList(equipList);
+
+      // Default all discovered equipment items to checked
+      const initialMap = {};
+      equipList.forEach(eq => {
+        initialMap[eq] = true;
+      });
+      setSelectedEquipmentMap(initialMap);
     }
 
     fetchGymData();
   }, []);
 
-  // --- Filtered Gym Exercises ---
+  // --- Filtered Gym Exercises (Body Parts, Auto-Equipment Checkboxes, Search) ---
   const filteredGymExercises = gymLibrary.filter(ex => {
     const matchesPart = !!gymSelectedParts[ex.bodyPart];
-    const matchesEquip = selectedEquipment === 'ALL' || ex.equipment.toLowerCase().includes(selectedEquipment.toLowerCase());
+
+    // Check if at least one piece of equipment required by exercise is checked off
+    const exEquipList = ex.equipment.split(',').map(e => e.trim());
+    const matchesEquip = exEquipList.some(eq => !!selectedEquipmentMap[eq]);
+
     const matchesSearch = gymSearchQuery.trim() === '' ||
       ex.name.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
       ex.bodyPart.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
       ex.equipment.toLowerCase().includes(gymSearchQuery.toLowerCase()) ||
       ex.description.toLowerCase().includes(gymSearchQuery.toLowerCase());
+
     return matchesPart && matchesEquip && matchesSearch;
   });
+
+  // Toggle All Equipment Checkboxes
+  const handleToggleAllEquipment = (enableAll) => {
+    const updated = {};
+    availableEquipmentList.forEach(eq => {
+      updated[eq] = enableAll;
+    });
+    setSelectedEquipmentMap(updated);
+  };
 
   // --- Gym PR / Set Logging Handler ---
   const handleLogGymSet = (exerciseName) => {
@@ -465,6 +501,8 @@ export default function App() {
   const isExpanded = expandedSupporting[selectedCaliSkill] || false;
   const currentStep = activeTrack ? activeTrack.ladder[activeTrack.currentIndex] : '';
 
+  const allEquipSelected = availableEquipmentList.length > 0 && availableEquipmentList.every(eq => !!selectedEquipmentMap[eq]);
+
   return (
     <div className="min-h-screen bg-[#09090B] text-slate-100 flex flex-col font-sans select-none">
       
@@ -672,40 +710,21 @@ export default function App() {
             </div>
 
             {/* FILTER & SEARCH CONTROLS */}
-            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-5">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
                 <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
                   <Sliders className="w-4 h-4" /> Body Part Selection
                 </span>
 
-                <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-slate-300">
-                  <div className="relative flex items-center">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
-                    <input
-                      type="text"
-                      placeholder="Search exercises..."
-                      value={gymSearchQuery}
-                      onChange={(e) => setGymSearchQuery(e.target.value)}
-                      className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF]"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <Filter className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <select
-                      value={selectedEquipment}
-                      onChange={(e) => setSelectedEquipment(e.target.value)}
-                      className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#00E5FF]"
-                    >
-                      <option value="ALL">All Equipment</option>
-                      <option value="Barbell">Barbell</option>
-                      <option value="Dumbbells">Dumbbells</option>
-                      <option value="Cable Machine">Cable Machine</option>
-                      <option value="Bench">Bench</option>
-                      <option value="Squat Rack">Squat Rack</option>
-                      <option value="Pull-Up Bar">Pull-Up Bar</option>
-                    </select>
-                  </div>
+                <div className="relative flex items-center">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search exercises..."
+                    value={gymSearchQuery}
+                    onChange={(e) => setGymSearchQuery(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF] w-full md:w-64"
+                  />
                 </div>
               </div>
 
@@ -736,6 +755,47 @@ export default function App() {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* DYNAMIC EQUIPMENT CHECKBOX SELECTOR */}
+              <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5 text-amber-400" /> Available Equipment (Auto-synced from .md)
+                  </span>
+                  <button
+                    onClick={() => handleToggleAllEquipment(!allEquipSelected)}
+                    className="text-[10px] font-mono text-[#00E5FF] hover:underline"
+                  >
+                    {allEquipSelected ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {availableEquipmentList.length > 0 ? (
+                    availableEquipmentList.map(equip => {
+                      const isChecked = !!selectedEquipmentMap[equip];
+                      return (
+                        <button
+                          key={equip}
+                          onClick={() => {
+                            setSelectedEquipmentMap(prev => ({ ...prev, [equip]: !isChecked }));
+                          }}
+                          className={`px-3 py-1 rounded font-mono text-xs border transition flex items-center gap-1.5 ${
+                            isChecked
+                              ? 'bg-amber-950/40 text-amber-300 border-amber-500/40 font-bold'
+                              : 'bg-slate-950 text-slate-600 border-slate-800'
+                          }`}
+                        >
+                          <span>{isChecked ? '✓' : '○'}</span>
+                          <span>{equip}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <span className="text-xs font-mono text-slate-500">Loading equipment from .md file...</span>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
@@ -860,7 +920,7 @@ export default function App() {
                 })
               ) : (
                 <div className="col-span-2 p-8 text-center font-mono text-xs text-slate-500 bg-slate-900/40 rounded border border-slate-800">
-                  No matching exercises found. Make sure <code className="text-cyan-400">public/gym/gym_exercises.md</code> exists and contains valid markdown blocks.
+                  No matching exercises found for your selected body parts and checked equipment options.
                 </div>
               )}
             </div>
