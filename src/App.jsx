@@ -854,8 +854,8 @@ export default function App() {
               </p>
             </div>
 
-            {/* STICKY ACTIVE TIMER HUD (PINNED TO TOP WHILE SCROLLING) */}
-            <div className="sticky top-[84px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
+            {/* STICKY ACTIVE TIMER HUD (PINNED BELOW HEADER & QUICK CHECK BAR) */}
+            <div className="sticky top-[140px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
                   {mobilityTimer.currentStretchName || 'Active Hold Timer'}
