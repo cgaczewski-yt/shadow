@@ -3,7 +3,7 @@ import {
   Flame, CheckCircle2, Circle, AlertTriangle, ShieldAlert,
   BookOpen, Terminal, Activity, Dumbbell, Timer, Play, Pause,
   RotateCcw, FileText, Download, Upload, Check, ChevronRight,
-  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp, Filter, Search, Award
+  ChevronLeft, Clock, Zap, Smartphone, RefreshCw, Layers, Sliders, ChevronDown, ChevronUp, Filter, Search, Award, Shuffle
 } from 'lucide-react';
 
 /* ============================================================================
@@ -110,7 +110,8 @@ export default function App() {
     chest: true, back: true, triceps: true, bicep: true, legs: true, core: true
   });
   const [gymSearchQuery, setGymSearchQuery] = useState('');
-  const [gymExerciseLimit, setGymExerciseLimit] = useState(12); // Default count of exercises to display
+  const [gymExerciseLimit, setGymExerciseLimit] = useState(12); // Count of exercises to display
+  const [randomSeed, setRandomSeed] = useState(0); // Trigger reshuffle
   const [gymStopwatch, setGymStopwatch] = useState({ active: false, seconds: 0, activeExercise: '' });
   const [gymRestTimer, setGymRestTimer] = useState({ active: false, secondsLeft: 0, total: 60 });
 
@@ -240,7 +241,7 @@ export default function App() {
     fetchGymData();
   }, []);
 
-  // --- Filtered & Limited Gym Exercises ---
+  // --- Filtered & Deterministic/Randomized Gym Exercises ---
   const filteredGymExercises = gymLibrary.filter(ex => {
     const matchesPart = !!gymSelectedParts[ex.bodyPart];
     const exEquipList = ex.equipment.split(',').map(e => e.trim());
@@ -255,9 +256,25 @@ export default function App() {
     return matchesPart && matchesEquip && matchesSearch;
   });
 
+  // Reshuffle pool when randomSeed changes
+  const [shuffledGymPool, setShuffledGymPool] = useState([]);
+
+  useEffect(() => {
+    if (filteredGymExercises.length === 0) {
+      setShuffledGymPool([]);
+      return;
+    }
+    const pool = [...filteredGymExercises];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    setShuffledGymPool(pool);
+  }, [gymLibrary, gymSelectedParts, selectedEquipmentMap, gymSearchQuery, randomSeed]);
+
   const displayedGymExercises = gymExerciseLimit === 'ALL'
-    ? filteredGymExercises
-    : filteredGymExercises.slice(0, gymExerciseLimit);
+    ? shuffledGymPool
+    : shuffledGymPool.slice(0, gymExerciseLimit);
 
   // Toggle All Equipment Checkboxes
   const handleToggleAllEquipment = (enableAll) => {
@@ -334,48 +351,6 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [gymRestTimer.active, gymRestTimer.secondsLeft]);
-
-  // --- Fetch Mobility Markdown Library ---
-  useEffect(() => {
-    async function fetchMobilityData() {
-      try {
-        const baseUrl = import.meta.env.BASE_URL || './';
-        const response = await fetch(`${baseUrl}stretches/daily_mobility.md`);
-        if (!response.ok) return;
-        const text = await response.text();
-        const rawBlocks = text.split(/(?=##\s+Stretch:)/g).filter(b => b.trim().length > 0);
-
-        const parsed = rawBlocks.map(block => {
-          if (!block.includes('### Body Part')) return null;
-
-          const getSection = (marker) => {
-            const idx = block.indexOf(marker);
-            if (idx === -1) return '';
-            const start = idx + marker.length;
-            const rest = block.substring(start);
-            const nextIdx = rest.search(/###|\n\n/);
-            return (nextIdx === -1 ? rest : rest.substring(0, nextIdx)).trim();
-          };
-
-          const lines = block.trim().split('\n');
-          const name = lines[0] ? lines[0].replace(/^##\s+Stretch:\s*/, '').trim() : 'Stretch';
-          const bodyPart = getSection('### Body Part').toLowerCase() || 'legs';
-          const defaultTime = getSection('### Default Time') || '60s';
-          const focus = getSection('### Focus') || '';
-          const cues = getSection('### Cues') || '';
-
-          const timeInSeconds = parseInt(defaultTime.replace(/\D/g, ''), 10) || 60;
-
-          return { name, bodyPart, defaultTime, timeInSeconds, focus, cues };
-        }).filter(Boolean);
-
-        setMobilityLibrary(parsed);
-      } catch (err) {
-        console.warn('Error reading daily_mobility.md:', err);
-      }
-    }
-    fetchMobilityData();
-  }, []);
 
   // --- Gym Stopwatch Interval Effect ---
   useEffect(() => {
@@ -669,7 +644,7 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">GYM EXERCISES & WORKOUTS</h2>
-              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, and track working sets, hold times, and personal records across your 300+ exercise library.</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Search, filter, randomize, and track working sets across your exercise repository.</p>
             </div>
 
             {/* STICKY GYM STOPWATCH & AUTOMATIC REST TIMER HUD */}
@@ -724,7 +699,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* FILTER, SEARCH & EXERCISE LIMIT CONTROLS */}
+            {/* FILTER, SEARCH, LIMIT & RANDOMIZE CONTROLS */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-5">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
                 <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
@@ -732,6 +707,18 @@ export default function App() {
                 </span>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  {/* Randomize Exercises Button */}
+                  <button
+                    onClick={() => {
+                      systemAudio.playSound('beep');
+                      setRandomSeed(prev => prev + 1);
+                    }}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-[#00E5FF] border border-[#00E5FF]/40 rounded font-mono text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <Shuffle className="w-3.5 h-3.5" />
+                    <span>Randomize</span>
+                  </button>
+
                   {/* Exercise Count Limit Selector */}
                   <div className="flex items-center gap-1.5 font-mono text-xs text-slate-300">
                     <span className="text-slate-400"># of Exercises:</span>
@@ -757,7 +744,7 @@ export default function App() {
                       placeholder="Search exercises..."
                       value={gymSearchQuery}
                       onChange={(e) => setGymSearchQuery(e.target.value)}
-                      className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF] w-48"
+                      className="bg-slate-950 border border-slate-800 rounded pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5FF] w-44"
                     />
                   </div>
                 </div>
