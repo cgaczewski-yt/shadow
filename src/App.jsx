@@ -141,22 +141,435 @@ export default function App() {
       "Straight-Arm Lat Pulldowns: Straight-arm lat tension and scapular depressor conditioning.",
       "Weighted Inverted Rows: Mid-back and posterior deltoid hypertrophy under heavy horizontal load.",
       "Hanging Leg Raises / L-Sits: Hip flexor compression and lower abdominal strength."
+    ],
+    backLever: [
+      "German Hangs: Bicep tendon and shoulder anterior capsule loaded flexibility.",
+      "Skin the Cat: Active shoulder girdle rotation under load.",
+      "Scapular Pull-Ups: Lat activation and active hang strength.",
+      "Reverse Hyperextensions: Lower back and glute posterior chain endurance."
+    ],
+    humanFlag: [
+      "Side Plank Hip Abduction: Oblique and lateral core stabilizer endurance.",
+      "Vertical Flag Negatives: Unilateral shoulder adduction eccentric control.",
+      "Dumbbell Side Bends: Oblique hypertrophy and spinal lateral flexion strength.",
+      "Windshield Wipers: Core rotational torque and anti-rotation stability."
+    ],
+    oneArmPullup: [
+      "One-Arm Lockoffs (90° & Top): Isometric bicep and brachialis strength at the sticking point.",
+      "Weighted Pull-Ups: Heavy bilateral lat strength foundation to build raw pulling capacity.",
+      "One-Arm Scapular Pull-Ups: Unilateral scapular depressor strength from a dead hang.",
+      "Bicep Hammer Curls: Elbow flexor and brachioradialis strengthening for elbow health under unilateral torque."
+    ],
+    hspu: [
+      "Overhead Dumbbell / Barbell Press: Heavy deltoid and triceps vertical pressing power.",
+      "Pike Push-Up Deficit Shrugs: Scapular elevation and trapezius strength at lockout.",
+      "Wall-Supported Handstand Holds: Overhead scapular stability and shoulder endurance.",
+      "Triceps Overhead Extension: Long-head triceps isolation to strengthen elbow extension."
+    ],
+    muscleUp: [
+      "Explosive Chest-to-Bar Pull-Ups: High pull power and transition velocity.",
+      "Straight-Bar Dips: Transition and pushout strength endurance.",
+      "Jumping Ring Muscle-Ups: Practicing the fluid turnover trajectory under reduced load.",
+      "L-Sit Pull-Ups: Core tension during vertical pulling mechanics."
+    ],
+    ironCross: [
+      "Ring Turn-Out Support Holds: Pectoral and rotator cuff stabilizer strength.",
+      "Cross Pull-Downs with Bands: Isolating the adductor torque required for the cross.",
+      "Rings Bulgarian Dips: Deep chest and triceps ring pressing power.",
+      "Weighted Ring Push-Ups: Pectoral and serratus pressing foundation."
+    ],
+    maltese: [
+      "Wide-Arm Planche Leans: Anterior deltoid lateral torque conditioning.",
+      "Incline Maltese Band Pulls: Scaled horizontal abduction strength.",
+      "Weighted Dips with Forward Lean: Lower pectoral and shoulder girdle strength.",
+      "Straight-Arm Cable Flyes: Isolated pectoral tension throughout the range of motion."
+    ],
+    vSit: [
+      "Pike Compression Lifts: Hip flexor and rectus abdominis shortening strength.",
+      "L-Sit Flutter Kicks: Lower abdominal endurance under static hip flexion.",
+      "Parallette Press-Ups: Deep compression pressing power.",
+      "Seated Leg Lifts over Objects: Active hip flexor height and control."
+    ],
+    lSitPress: [
+      "Puck Lifts in L-Sit: Triceps and compression separation strength.",
+      "Straddle Compression Pulses: Inner thigh and hip flexor active flexibility.",
+      "Wall-Supported Press Negatives: Controlled eccentric lowering from handstand to L-sit.",
+      "Pike Push-Ups: Overhead and shoulder pressing strength."
+    ],
+    frontLeverRow: [
+      "Weighted Inverted Rows: Heavy mid-back and rhomboid loading.",
+      "Tuck Front Lever Pulls: Dynamic latissimus engagement.",
+      "Straight-Arm Pullovers: Lat and serratus dynamic power.",
+      "Barbell Pendlay Rows: Raw explosive pulling power."
+    ],
+    planchePushup: [
+      "Pseudo Planche Push-Ups: Bent-arm pushing mechanics with forward lean.",
+      "Decline Push-Ups: Upper chest and anterior deltoid overload.",
+      "Hollow Body Push-Ups: Core rigidity during pressing.",
+      "Triceps Diamond Push-Ups: Elbow extension strength."
+    ],
+    archerPullup: [
+      "Unilateral Side-to-Side Pull-Ups: Shifting load dynamically across the upper body.",
+      "Assisted One-Arm Negatives: Eccentric unilateral pulling strength.",
+      "Wide Grip Pull-Ups: Lat width and upper back recruitment.",
+      "Bicep Concentration Curls: Elbow flexor isolation."
+    ],
+    pistolSquat: [
+      "Box Pistol Squats: Depth and knee tracking control.",
+      "Cossack Squats: Lateral leg mobility and unilateral ankle stability.",
+      "Bulgarian Split Squats: Single-leg quad and glute hypertrophy.",
+      "Calf Raises: Ankle plantarflexion strength."
+    ],
+    nordicCurl: [
+      "Romanian Deadlifts: Hamstring posterior chain loading.",
+      "Glute-Ham Raises: Knee flexion strength and hip extension integration.",
+      "Swiss Ball Hamstring Curls: High-rep hamstring endurance.",
+      "Good Mornings: Erector spinae and hip hinge strength."
+    ],
+    dragonFlag: [
+      "Hanging Leg Raises: Lower abdominal compression.",
+      "Reverse Crunches on Incline: Lower spine articulation and core strength.",
+      "Plank Body Saws: Anti-extension core stability.",
+      "Hollow Body Holds: Isometric core endurance."
+    ],
+    frontLeverRaise: [
+      "Straight-Arm Scapular Pulls: Lat depressor strength.",
+      "Inverted Hang Pull-Overs: Full range lat and teres major conditioning.",
+      "Weighted Pull-Ups: Raw pulling strength.",
+      "Chest-to-Bar Pull-Ups: Upper back peak contraction."
+    ],
+    ringDips: [
+      "Weighted Dips: Chest and triceps pressing foundation.",
+      "Ring Support Holds: Scapular depression and elbow lockout stability.",
+      "Bulgarian Ring Push-Ups: Pectoral stabilization.",
+      "Triceps Pushdowns: Isolation strength."
+    ],
+    freestandingHS: [
+      "Wall Handstand Shoulder Shrugs: Trapezius and serratus elevation.",
+      "Bail-Out Cartwheel Practice: Safety and spatial awareness.",
+      "Crow Pose / Frog Stand: Balance and wrist conditioning.",
+      "Plank to Pike Transitions: Shoulder mobility and core integration."
+    ],
+    oneArmPushup: [
+      "Archer Push-Ups: Unilateral pressing bias.",
+      "Decline One-Arm Push-Ups: Increased pressing load.",
+      "Weighted Push-Ups: Pectoral and triceps overload.",
+      "Plank Shoulder Taps: Anti-rotation core stability."
+    ],
+    deg90HSPU: [
+      "Freestanding HSPU Negatives: Controlled eccentric vertical descent.",
+      "Weighted Pike Push-Ups: Overload vertical pressing.",
+      "Press to Handstand: Transition strength from floor to vertical.",
+      "Handstand Pirouettes: Overhead balance adjustments."
+    ],
+    ringRollouts: [
+      "Ab Wheel Rollouts: Anti-extension core overload.",
+      "Long-Lever Planks: Deep transverse abdominis engagement.",
+      "Hanging Windshield Wipers: Oblique rotational strength.",
+      "Dead Bugs: Core coordination and stability."
+    ],
+    frontLeverPulls: [
+      "Weighted Inverted Rows: Mid-back pulling power.",
+      "Chest-to-Bar Pull-Ups: Upper range of motion pulling.",
+      "Straight-Arm Lat Pulldowns: Latissimus dorsi isolation.",
+      "Face Pulls: Rear delt and external rotator health."
+    ],
+    declinePikeHSPU: [
+      "Elevated Feet Pike Push-Ups: High-angle shoulder pressing.",
+      "Dumbbell Z-Press: Sitting overhead pressing with zero leg drive.",
+      "Wall Handstand Push-Ups: Full vertical range of motion.",
+      "Lateral Raises: Deltoid hypertrophy."
     ]
   });
 
   const [expandedSupporting, setExpandedSupporting] = useState({});
 
-  // Calisthenics Tracks State
+  // Calisthenics Tracks State (All 25 Skills)
   const [caliTracks, setCaliTracks] = useState(() => {
-    const saved = localStorage.getItem('shadow_cali_tracks_v2');
-    if (saved) return JSON.parse(saved);
-    return {
+    const defaults = {
       planche: { name: 'Planche Progression', category: 'Push / Isometrics', ladder: ['Frog Stand', 'Tuck Planche', 'Advanced Tuck Planche', 'Straddle Planche', 'Full Planche'], currentIndex: 1, pr: '10s @ RPE 8.5', history: [] },
-      frontLever: { name: 'Front Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'], currentIndex: 1, pr: '12s @ RPE 9.0', history: [] }
+      frontLever: { name: 'Front Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Front Lever', 'Advanced Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever', 'Full Front Lever'], currentIndex: 1, pr: '12s @ RPE 9.0', history: [] },
+      backLever: { name: 'Back Lever Progression', category: 'Pull / Isometrics', ladder: ['Tuck Back Lever', 'Advanced Tuck Back Lever', 'Straddle Back Lever', 'Full Back Lever'], currentIndex: 1, pr: '15s @ RPE 8.0', history: [] },
+      humanFlag: { name: 'Human Flag Progression', category: 'Lateral Core / Isometrics', ladder: ['Vertical Flag Hold', 'Tuck Human Flag', 'Straddle Human Flag', 'Full Human Flag'], currentIndex: 1, pr: '8s @ RPE 9.0', history: [] },
+      oneArmPullup: { name: 'One-Arm Pull-Up', category: 'Pull / Unilateral', ladder: ['Archer Pull-Ups', 'Assisted 1APU (Band)', 'Eccentric 1APU Lockoffs', 'Full One-Arm Pull-Up'], currentIndex: 1, pr: '2 reps @ RPE 8.5', history: [] },
+      hspu: { name: 'Handstand Push-Up', category: 'Push / Vertical', ladder: ['Pike Push-Ups', 'Wall-Supported HSPU', 'Deficit Wall HSPU', 'Freestanding HSPU'], currentIndex: 1, pr: '5 reps @ RPE 9.0', history: [] },
+      muscleUp: { name: 'Muscle-Up (Bar/Ring)', category: 'Explosive / Transition', ladder: ['High Chest Pull-ups', 'Jumping Muscle-Ups', 'Strict Bar Muscle-Up', 'Strict Ring Muscle-Up'], currentIndex: 2, pr: '3 reps @ RPE 8.0', history: [] },
+      ironCross: { name: 'Iron Cross (Rings)', category: 'Rings / Isometrics', ladder: ['Cross Band Pulls', 'Cross Lockoffs (Feet Down)', 'Cross Negatives', 'Full Iron Cross'], currentIndex: 0, pr: '5s @ RPE 9.5', history: [] },
+      maltese: { name: 'Maltese Cross', category: 'Rings / Isometrics', ladder: ['Incline Maltese Hold', 'Floor Maltese Press', 'Maltese Negatives', 'Full Maltese'], currentIndex: 0, pr: '3s @ RPE 9.5', history: [] },
+      vSit: { name: 'V-Sit / Manna', category: 'Compression / Core', ladder: ['Tuck L-Sit', 'Full L-Sit', 'V-Sit (45 deg)', 'Manna Progression'], currentIndex: 1, pr: '12s @ RPE 8.0', history: [] },
+      lSitPress: { name: 'Press to Handstand', category: 'Balance / Compression', ladder: ['Puck Press Negatives', 'Straddle Press from Floor', 'L-Sit Press to Handstand', 'Stallion Press'], currentIndex: 0, pr: '1 rep @ RPE 9.0', history: [] },
+      frontLeverRow: { name: 'Front Lever Touch Rows', category: 'Pull / Hypertrophy', ladder: ['Tuck FL Rows', 'Adv Tuck FL Rows', 'Straddle FL Touch Rows', 'Full FL Touch Rows'], currentIndex: 1, pr: '6 reps @ RPE 8.5', history: [] },
+      planchePushup: { name: 'Planche Push-Ups', category: 'Push / Hypertrophy', ladder: ['Planche Lean Push-ups', 'Tuck Planche Push-ups', 'Adv Tuck Planche Push-ups', 'Straddle Planche Push-ups'], currentIndex: 0, pr: '8 reps @ RPE 8.5', history: [] },
+      archerPullup: { name: 'Archer Pull-Ups & Push-Ups', category: 'Unilateral Strength', ladder: ['Assisted Archer Pulls', 'Strict Archer Pull-Ups', 'Weighted Archer Pull-Ups', 'One-Arm Archer'], currentIndex: 1, pr: '8 reps @ RPE 8.0', history: [] },
+      pistolSquat: { name: 'Pistol Squat Progression', category: 'Legs / Unilateral', ladder: ['Box Pistol Squats', 'Counterbalance Pistols', 'Full Pistol Squats', 'Weighted Pistol Squats'], currentIndex: 2, pr: '10 reps @ RPE 8.0', history: [] },
+      nordicCurl: { name: 'Nordic Hamstring Curl', category: 'Legs / Posterior Chain', ladder: ['Band-Assisted Nordics', 'Eccentric Nordics (5s)', 'Full Nordic Curls', 'Weighted Nordics'], currentIndex: 1, pr: '5 reps @ RPE 9.0', history: [] },
+      dragonFlag: { name: 'Dragon Flag', category: 'Core / Posterior Chain', ladder: ['Tuck Dragon Flag', 'Straddle Dragon Flag', 'Full Straight Dragon Flag', 'Weighted Dragon Flag'], currentIndex: 1, pr: '8 reps @ RPE 8.5', history: [] },
+      frontLeverRaise: { name: 'Front Lever Raises (Bevels)', category: 'Pull / Dynamic', ladder: ['Tuck FL Raises', 'Adv Tuck FL Raises', 'Straddle FL Raises', 'Full FL Raises'], currentIndex: 0, pr: '4 reps @ RPE 9.0', history: [] },
+      ringDips: { name: 'Ring Dips (Strict & Weighted)', category: 'Push / Dips', ladder: ['Support Hold (Rings)', 'Strict Ring Dips', 'Deep Ring Dips', 'Weighted Ring Dips'], currentIndex: 1, pr: '12 reps @ RPE 8.0', history: [] },
+      freestandingHS: { name: 'Freestanding Handstand', category: 'Balance / Skill', ladder: ['Chest-to-Wall Hold', 'Kick-up Balance Drills', 'Freestanding Hold (30s)', 'Handstand Walk'], currentIndex: 1, pr: '25s @ RPE 8.0', history: [] },
+      oneArmPushup: { name: 'One-Arm Push-Up', category: 'Push / Unilateral', ladder: ['Elevated OAPU', 'Floor OAPU (Feet Wide)', 'Strict OAPU (Feet Together)', 'Deficit OAPU'], currentIndex: 1, pr: '10 reps @ RPE 8.0', history: [] },
+      deg90HSPU: { name: '90-Degree Handstand Push-Up', category: 'Push / Advanced', ladder: ['Pike 90-Deg Press', 'Wall 90-Deg HSPU', 'Negative 90-Deg HSPU', 'Full 90-Deg HSPU'], currentIndex: 0, pr: '2 reps @ RPE 9.5', history: [] },
+      ringRollouts: { name: 'Ring Ab Rollouts', category: 'Core / Anti-Extension', ladder: ['Incline Ring Rollouts', 'Floor Kneeling Rollouts', 'Standing Rollouts (Knees)', 'Full Standing Ring Rollouts'], currentIndex: 1, pr: '10 reps @ RPE 8.5', history: [] },
+      frontLeverPulls: { name: 'Front Lever Pulls', category: 'Pull / Power', ladder: ['Inverted Pulls', 'Tuck FL Pulls', 'Adv Tuck FL Pulls', 'Full FL Pulls'], currentIndex: 1, pr: '8 reps @ RPE 8.5', history: [] },
+      declinePikeHSPU: { name: 'Decline Pike HSPU', category: 'Push / Vertical', ladder: ['Pike Push-ups', 'Elevated Feet Pike', 'Box HSPU', 'Decline Deficit HSPU'], currentIndex: 1, pr: '8 reps @ RPE 8.5', history: [] }
     };
+    const saved = localStorage.getItem('shadow_cali_tracks_v2');
+    if (saved) {
+      try {
+        // Merge saved progress over the full defaults so skills restored after
+        // the gym-tab refactor appear even if a trimmed set was persisted
+        return { ...defaults, ...JSON.parse(saved) };
+      } catch (e) {
+        return defaults;
+      }
+    }
+    return defaults;
   });
 
   const [caliInputs, setCaliInputs] = useState({ performance: '', rpe: '8.5' });
+
+  // KaTeX Renderer Trigger
+  useEffect(() => {
+    if (activeTab === 'math' && window.renderMathInElement) {
+      const mathContainer = document.getElementById('math-quest-container');
+      if (mathContainer) {
+        window.renderMathInElement(mathContainer, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    }
+  }, [activeTab, currentMathIndex, showSolution, mathLoading]);
+
+  // --- Fetch Mobility Markdown Library ---
+  useEffect(() => {
+    async function fetchMobilityData() {
+      try {
+        const baseUrl = import.meta.env.BASE_URL || './';
+        const response = await fetch(`${baseUrl}stretches/daily_mobility.md`);
+        if (!response.ok) return;
+        const text = await response.text();
+        const rawBlocks = text.split(/(?=##\s+Stretch:)/g).filter(b => b.trim().length > 0);
+
+        const parsed = rawBlocks.map(block => {
+          if (!block.includes('### Body Part')) return null;
+
+          const lines = block.trim().split('\n');
+          const name = lines[0] ? lines[0].replace(/^##\s+Stretch:\s*/, '').trim() : 'Stretch';
+
+          const getSection = (marker) => {
+            const idx = block.indexOf(marker);
+            if (idx === -1) return '';
+            const start = idx + marker.length;
+            const rest = block.substring(start);
+            const nextIdx = rest.search(/###|\n\n/);
+            return (nextIdx === -1 ? rest : rest.substring(0, nextIdx)).trim();
+          };
+
+          const bodyPart = getSection('### Body Part').toLowerCase() || 'legs';
+          const defaultTime = getSection('### Default Time') || '60s';
+          const focus = getSection('### Focus') || '';
+          const cues = getSection('### Cues') || '';
+
+          const timeInSeconds = parseInt(defaultTime.replace(/\D/g, ''), 10) || 60;
+
+          return { name, bodyPart, defaultTime, timeInSeconds, focus, cues };
+        }).filter(Boolean);
+
+        setMobilityLibrary(parsed);
+        generateRoutine(parsed, { neck: true, upper_back: true, lower_back: true, legs: true, arms: true }, 12);
+      } catch (err) {
+        console.warn('Error reading daily_mobility.md:', err);
+      }
+    }
+    fetchMobilityData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // --- Generate Random Routine Based on Target Parts & Duration ---
+  const generateRoutine = (library = mobilityLibrary, activeParts = selectedBodyParts, targetMinutes = targetDurationMinutes) => {
+    const enabledTags = Object.keys(activeParts).filter(k => activeParts[k]);
+    if (enabledTags.length === 0 || library.length === 0) {
+      setActiveRoutine([]);
+      return;
+    }
+
+    const matchingPool = library.filter(s => enabledTags.includes(s.bodyPart));
+    if (matchingPool.length === 0) {
+      setActiveRoutine([]);
+      return;
+    }
+
+    const targetSec = targetMinutes * 60;
+    let selected = [];
+    let currentSec = 0;
+
+    const shuffled = [...matchingPool].sort(() => 0.5 - Math.random());
+
+    let i = 0;
+    while (currentSec < targetSec && selected.length < 12) {
+      const item = shuffled[i % shuffled.length];
+      selected.push(item);
+      currentSec += item.timeInSeconds;
+      i++;
+    }
+
+    setActiveRoutine(selected);
+  };
+
+  // --- Fetch Math Problems Markdown ---
+  useEffect(() => {
+    async function fetchMathProblems() {
+      try {
+        const baseUrl = import.meta.env.BASE_URL || './';
+        const response = await fetch(`${baseUrl}math/paper_problem_sets.md`);
+        if (!response.ok) return;
+        const text = await response.text();
+        const rawBlocks = text.split(/(?=##\s+Problem)/g).filter(b => b.trim().length > 0);
+
+        const parsed = rawBlocks.map((block, idx) => {
+          const lines = block.trim().split('\n');
+          const titleLine = lines.find(l => l.startsWith('## ')) || lines[0] || `Problem ${idx + 1}`;
+          const title = titleLine.replace(/^##\s*/, '').trim();
+
+          const getSection = (startMarker, endMarkers) => {
+            const startIndex = block.indexOf(startMarker);
+            if (startIndex === -1) return '';
+            const contentStart = startIndex + startMarker.length;
+            let endIndex = block.length;
+            for (const em of endMarkers) {
+              const emIndex = block.indexOf(em, contentStart);
+              if (emIndex !== -1 && emIndex < endIndex) {
+                endIndex = emIndex;
+              }
+            }
+            return block.substring(contentStart, endIndex).trim();
+          };
+
+          const category = getSection('### Category', ['### Concept', '### Statement', '### Paper Derivation & Solution']);
+          const concept = getSection('### Concept', ['### Statement', '### Paper Derivation & Solution']);
+          const statement = getSection('### Statement', ['### Paper Derivation & Solution']);
+          const solution = getSection('### Paper Derivation & Solution', []);
+
+          return {
+            id: idx + 1,
+            title: title,
+            domain: category || 'Engineering Math',
+            concept: concept || '',
+            problem: statement || block,
+            solution: solution || 'Derivation available on scratchpad.'
+          };
+        }).filter(p => p.problem.length > 0);
+
+        if (parsed.length > 0) {
+          setMathProblems(parsed);
+          const dateSeed = parseInt(todayStr.replace(/-/g, ''), 10);
+          const dailyIndex = dateSeed % parsed.length;
+          setCurrentMathIndex(dailyIndex);
+        }
+      } catch (err) {
+        console.warn('Error fetching paper_problem_sets.md:', err);
+      } finally {
+        setMathLoading(false);
+      }
+    }
+    fetchMathProblems();
+  }, [todayStr]);
+
+  const handleRegenerateProblem = () => {
+    systemAudio.playSound('beep');
+    setShowSolution(false);
+    if (mathProblems.length === 0) return;
+    let nextIndex = currentMathIndex;
+    if (mathProblems.length > 1) {
+      while (nextIndex === currentMathIndex) {
+        nextIndex = Math.floor(Math.random() * mathProblems.length);
+      }
+    }
+    setCurrentMathIndex(nextIndex);
+  };
+
+  // --- Fetch Supporting Exercises from Calisthenics Progressions Markdown ---
+  // Maps md headings ("## 3. One-Arm Pull-Up (OAP)") to caliTracks keys.
+  // Skills not covered by the md (maltese, nordicCurl, deg90HSPU, ringRollouts,
+  // frontLeverRow, planchePushup) keep the hardcoded defaults in useState above.
+  // TODO(full-unification): Also derive the caliTracks ladders and tier targets
+  // from calisthenics_progressions.md tables instead of the hardcoded ladders.
+  // That requires deciding the canonical ladder format (md's 4-tier tables vs
+  // the existing 5-rung ladders) and migrating saved currentIndex values in
+  // localStorage. Supporting-exercise descriptions are loaded from the md now;
+  // ladders remain hardcoded until then.
+  useEffect(() => {
+    const MD_HEADING_TO_TRACK_KEY = {
+      'Planche': 'planche',
+      'Front Lever': 'frontLever',
+      'One-Arm Pull-Up (OAP)': 'oneArmPullup',
+      'Handstand Push-Up (HSPU)': 'hspu',
+      'Human Flag': 'humanFlag',
+      'Back Lever': 'backLever',
+      'Iron Cross': 'ironCross',
+      'V-Sit & Manna': 'vSit',
+      'Muscle-Up (Bar & Dip Bar)': 'muscleUp',
+      'One-Arm Push-Up (OAPU)': 'oneArmPushup',
+      'Pistol Squat (Single-Leg Squat)': 'pistolSquat',
+      'Dragon Flag': 'dragonFlag',
+      'Archer Pull-Up / Chin-Up': 'archerPullup',
+      'L-Sit to Handstand Press': 'lSitPress',
+      'Handstand Hold (Freestanding Balance)': 'freestandingHS',
+      'Ring / Bar Dip (Deficit / Weighted Bodyweight)': 'ringDips',
+      'Front Lever Touch / Dynamic Pull-Up': 'frontLeverPulls'
+    };
+
+    async function fetchProgressionsData() {
+      try {
+        const baseUrl = import.meta.env.BASE_URL || './';
+        const response = await fetch(`${baseUrl}progressions/calisthenics_progressions.md`);
+        if (!response.ok) return;
+        const text = await response.text();
+        const rawBlocks = text.split(/\n(?=##\s)/g).filter(b => b.trim().length > 0);
+
+        const updated = {};
+
+        rawBlocks.forEach(block => {
+          const titleLine = block.split('\n').find(l => l.startsWith('## '));
+          if (!titleLine) return;
+          const title = titleLine.replace(/^##\s+\d+\.\s*/, '').trim();
+          const trackKey = MD_HEADING_TO_TRACK_KEY[title];
+          if (!trackKey) return;
+
+          // Parse the "### Supporting Strength Exercises" bullet list
+          const marker = '### Supporting Strength Exercises';
+          const idx = block.indexOf(marker);
+          if (idx === -1) return;
+          const rest = block.substring(idx + marker.length);
+          const endIdx = rest.search(/###|^---$/m);
+          const section = endIdx === -1 ? rest : rest.substring(0, endIdx);
+
+          const items = section.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.startsWith('- '))
+            .map(line => {
+              const match = line.match(/^-\s+\*\*(.+?)\*\*:\s*(.+)$/);
+              return match ? `${match[1]}: ${match[2]}` : line.replace(/^-\s+/, '');
+            })
+            .filter(Boolean);
+
+          if (items.length > 0) updated[trackKey] = items;
+        });
+
+        if (Object.keys(updated).length > 0) {
+          setSupportingExercises(prev => ({ ...prev, ...updated }));
+        }
+      } catch (err) {
+        console.warn('Error reading calisthenics_progressions.md:', err);
+      }
+    }
+    fetchProgressionsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persistent Storage Sync
   useEffect(() => {
@@ -366,6 +779,49 @@ export default function App() {
     return () => clearInterval(interval);
   }, [gymStopwatch.active]);
 
+  // --- Calisthenics Timer / Stopwatch Interval ---
+  useEffect(() => {
+    let interval = null;
+
+    if (caliTimer.active) {
+      toggleWakeLock(true);
+      interval = setInterval(() => {
+        setCaliTimer(prev => {
+          if (caliTimerMode === 'timer') {
+            if (prev.seconds <= 1) {
+              systemAudio.playSound('complete');
+              toggleWakeLock(false);
+              return { ...prev, seconds: 0, active: false };
+            }
+            return { ...prev, seconds: prev.seconds - 1 };
+          } else {
+            return { ...prev, seconds: prev.seconds + 1 };
+          }
+        });
+      }, 1000);
+    } else {
+      toggleWakeLock(false);
+    }
+
+    return () => clearInterval(interval);
+  }, [caliTimer.active, caliTimerMode]);
+
+  // Mobility Timer Interval
+  useEffect(() => {
+    let interval = null;
+    if (mobilityTimer.active && mobilityTimer.secondsLeft > 0) {
+      toggleWakeLock(true);
+      interval = setInterval(() => {
+        setMobilityTimer(prev => ({ ...prev, secondsLeft: prev.secondsLeft - 1 }));
+      }, 1000);
+    } else if (mobilityTimer.secondsLeft === 0 && mobilityTimer.active) {
+      systemAudio.playSound('complete');
+      setMobilityTimer(prev => ({ ...prev, active: false }));
+      toggleWakeLock(false);
+    }
+    return () => clearInterval(interval);
+  }, [mobilityTimer.active, mobilityTimer.secondsLeft]);
+
   // --- Auto Date Rollover Effect ---
   useEffect(() => {
     const updateCountdown = () => {
@@ -465,6 +921,7 @@ export default function App() {
   };
 
   const pendingCount = Object.values(pillars).filter(p => !p.completedToday).length;
+  const currentProblem = mathProblems[currentMathIndex];
   const activeTrack = caliTracks[selectedCaliSkill];
   const activeSupporting = supportingExercises[selectedCaliSkill] || [];
   const isExpanded = expandedSupporting[selectedCaliSkill] || false;
@@ -1114,6 +1571,35 @@ export default function App() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Expandable Supporting Strength Exercises Section */}
+                  {activeSupporting.length > 0 && (
+                    <div className="mt-4 rounded border border-slate-800 bg-slate-950/90 overflow-hidden">
+                      <button
+                        onClick={() => setExpandedSupporting(prev => ({ ...prev, [selectedCaliSkill]: !prev[selectedCaliSkill] }))}
+                        className="w-full px-4 py-3 flex items-center justify-between text-xs font-mono text-[#FFB100] hover:bg-slate-900 transition"
+                      >
+                        <span className="font-bold flex items-center gap-2">
+                          <span>✓ Supporting Strength Exercises</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-500/30">
+                            {activeSupporting.length} exercises
+                          </span>
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="p-4 pt-2 space-y-2 border-t border-slate-800/80">
+                          {activeSupporting.map((item, idx) => (
+                            <div key={idx} className="text-xs font-mono text-slate-300 flex items-start gap-2">
+                              <span className="text-[#00E5FF] font-bold">•</span>
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-800">
@@ -1172,6 +1658,17 @@ export default function App() {
                       Log Set & Update PR
                     </button>
                   </div>
+
+                  {activeTrack.history.length > 0 && (
+                    <div className="text-xs font-mono text-slate-400 space-y-1.5 pt-2">
+                      <span className="text-slate-500 uppercase tracking-wider block font-bold">Recent Session History:</span>
+                      {activeTrack.history.slice(0, 3).map((h, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-slate-300">
+                          <ChevronRight className="w-3.5 h-3.5 text-[#00E5FF]" /> {h}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1181,9 +1678,70 @@ export default function App() {
         {/* MATH & LOGIC */}
         {activeTab === 'math' && (
           <div id="math-quest-container" className="space-y-6 max-w-4xl mx-auto">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
+            <div className="border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-mono font-bold text-white tracking-tight">DAILY MATH & LOGIC QUEST</h2>
+                <p className="text-xs text-slate-400 font-mono mt-1">1 problem selected per day from your 300-problem repository.</p>
+              </div>
+
+              <button
+                onClick={handleRegenerateProblem}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-[#00E5FF]/40 text-[#00E5FF] rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(0,229,255,0.1)]"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Regenerate Random Problem
+              </button>
             </div>
+
+            {mathLoading ? (
+              <div className="p-8 text-center font-mono text-xs text-slate-400 bg-slate-900/50 rounded-lg border border-slate-800">
+                Loading problem set from paper_problem_sets.md...
+              </div>
+            ) : currentProblem ? (
+              <div className="p-6 rounded-lg border border-slate-800 bg-slate-900/60 space-y-4 shadow-lg">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <span className="text-xs font-mono px-2.5 py-1 bg-cyan-950 text-[#00E5FF] border border-[#00E5FF]/30 rounded">
+                    {currentProblem.domain}
+                  </span>
+                  <span className="text-xs font-mono text-slate-400">
+                    Problem #{currentProblem.id} of {mathProblems.length}
+                  </span>
+                </div>
+
+                <h3 className="font-mono font-bold text-lg text-white">{currentProblem.title}</h3>
+
+                {currentProblem.concept && (
+                  <div className="text-xs font-mono text-amber-400 bg-amber-950/20 border border-amber-500/20 px-3 py-1.5 rounded">
+                    <span className="font-bold">Concept:</span> {currentProblem.concept}
+                  </div>
+                )}
+
+                <div className="text-sm font-mono text-slate-200 bg-slate-950 p-4 rounded border border-slate-800/90 whitespace-pre-wrap leading-relaxed">
+                  {currentProblem.problem}
+                </div>
+
+                <div className="pt-2 flex flex-col gap-3">
+                  <button
+                    onClick={() => setShowSolution(!showSolution)}
+                    className="self-start px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded font-mono text-xs transition flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4 text-[#00E5FF]" />
+                    {showSolution ? 'Hide Derivation & Solution' : 'View Written Derivation & Solution'}
+                  </button>
+
+                  {showSolution && (
+                    <div className="p-4 bg-slate-950 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed">
+                      <span className="text-emerald-400 font-bold block mb-2">=== STEP-BY-STEP DERIVATION ===</span>
+                      {currentProblem.solution}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 text-center font-mono text-xs text-red-400 bg-slate-900/50 rounded-lg border border-slate-800">
+                No problems found in paper_problem_sets.md. Please ensure the file is in `public/math/`.
+              </div>
+            )}
           </div>
         )}
 
@@ -1192,6 +1750,155 @@ export default function App() {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-2xl font-mono font-bold text-white tracking-tight">MOBILITY ROUTINE GENERATOR</h2>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                10–15 min full-body or targeted routines pulled dynamically from daily_mobility.md.
+              </p>
+            </div>
+
+            {/* STICKY ACTIVE TIMER HUD */}
+            <div className="sticky top-[165px] md:top-[80px] z-40 p-4 rounded-xl border border-[#00E5FF]/40 bg-[#09090B]/95 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider block">
+                  {mobilityTimer.currentStretchName || 'Active Hold Timer'}
+                </span>
+                <div className="text-3xl md:text-5xl font-mono font-bold text-white tracking-wider">
+                  {Math.floor(mobilityTimer.secondsLeft / 60)}:
+                  {String(mobilityTimer.secondsLeft % 60).padStart(2, '0')}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMobilityTimer(prev => ({ ...prev, active: !prev.active }))}
+                  className={`px-4 py-2 rounded font-mono text-xs font-bold flex items-center gap-1.5 transition ${
+                    mobilityTimer.active ? 'bg-amber-500 text-black' : 'bg-[#00E5FF] text-black'
+                  }`}
+                >
+                  {mobilityTimer.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {mobilityTimer.active ? 'PAUSE' : 'START HOLD'}
+                </button>
+                <button
+                  onClick={() => setMobilityTimer({ active: false, secondsLeft: 60, total: 60, currentStretchName: '' })}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-mono text-xs flex items-center justify-center gap-1"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Target Area Controls */}
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-lg space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                <span className="text-xs font-mono font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-2">
+                  <Sliders className="w-4 h-4" /> Routine Customizer
+                </span>
+
+                <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
+                  <span>Target Time:</span>
+                  {[5, 10, 12, 15].map(mins => (
+                    <button
+                      key={mins}
+                      onClick={() => {
+                        setTargetDurationMinutes(mins);
+                        generateRoutine(mobilityLibrary, selectedBodyParts, mins);
+                      }}
+                      className={`px-2.5 py-1 rounded border ${
+                        targetDurationMinutes === mins
+                          ? 'bg-[#00E5FF] text-black font-bold border-[#00E5FF]'
+                          : 'bg-slate-950 border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {mins}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Body Part Selection Toggles */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'neck', label: 'Neck' },
+                  { key: 'upper_back', label: 'Upper Back' },
+                  { key: 'lower_back', label: 'Lower Back' },
+                  { key: 'legs', label: 'Legs' },
+                  { key: 'arms', label: 'Arms / Shoulders' }
+                ].map(part => {
+                  const isChecked = selectedBodyParts[part.key];
+                  return (
+                    <button
+                      key={part.key}
+                      onClick={() => {
+                        const updated = { ...selectedBodyParts, [part.key]: !isChecked };
+                        setSelectedBodyParts(updated);
+                        generateRoutine(mobilityLibrary, updated, targetDurationMinutes);
+                      }}
+                      className={`px-3 py-1.5 rounded font-mono text-xs border transition ${
+                        isChecked
+                          ? 'bg-cyan-950/60 text-[#00E5FF] border-[#00E5FF]/40 font-bold'
+                          : 'bg-slate-950 text-slate-500 border-slate-800'
+                      }`}
+                    >
+                      {isChecked ? '✓ ' : '+ '}{part.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 font-mono text-xs text-slate-400">
+                <span>
+                  Estimated Routine Length: <span className="text-white font-bold">{activeRoutine.reduce((acc, curr) => acc + curr.timeInSeconds, 0) / 60} mins</span> ({activeRoutine.length} exercises)
+                </span>
+                <button
+                  onClick={() => generateRoutine(mobilityLibrary, selectedBodyParts, targetDurationMinutes)}
+                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-[#00E5FF] rounded flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Re-roll Routine
+                </button>
+              </div>
+            </div>
+
+            {/* Generated Routine Card Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeRoutine.length > 0 ? (
+                activeRoutine.map((stretch, i) => (
+                  <div key={i} className="p-4 rounded-lg border border-slate-800 bg-slate-900/50 flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-mono font-bold text-sm text-white flex items-center gap-2">
+                          <span className="text-xs text-[#00E5FF] border border-[#00E5FF]/30 px-1.5 py-0.2 rounded bg-cyan-950/40 uppercase">
+                            {stretch.bodyPart.replace('_', ' ')}
+                          </span>
+                          {stretch.name}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[#00E5FF] text-xs font-mono">
+                          {stretch.defaultTime}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono mt-1"><span className="text-slate-300">Target:</span> {stretch.focus}</p>
+                      <p className="text-xs text-slate-300 font-mono mt-2 bg-slate-950 p-2.5 rounded border border-slate-800/80">
+                        <span className="text-[#FFB100]">Form Cue:</span> {stretch.cues}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        systemAudio.playSound('beep');
+                        setMobilityTimer({
+                          active: true,
+                          secondsLeft: stretch.timeInSeconds,
+                          total: stretch.timeInSeconds,
+                          currentStretchName: stretch.name
+                        });
+                      }}
+                      className="w-full py-2 bg-slate-800 hover:bg-[#00E5FF] hover:text-black text-slate-200 rounded font-mono text-xs font-bold transition flex items-center justify-center gap-2"
+                    >
+                      <Timer className="w-3.5 h-3.5" /> Start {stretch.defaultTime} Timer
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 p-8 text-center font-mono text-xs text-slate-500 bg-slate-900/40 rounded border border-slate-800">
+                  Select at least one body part tag above to generate a mobility routine.
+                </div>
+              )}
             </div>
           </div>
         )}
